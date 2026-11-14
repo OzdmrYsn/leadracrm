@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  /* Koyu zeminlerde (sol menü, tanıtım sayfasının koyu bölümleri) odak halkası açık renge döner. */
+  [data-surface="dark"] {
+    --focus: var(--focus-inverse);
+  }
+
+  /* Koyu zeminin içindeki beyaz adalar (kart, pencere) odak halkasını yeniden koyu renge alır. */
+  [data-surface="light"] {
+    --focus: var(--accent);
+  }
+
+  [data-surface="dark"] ::selection {
+    background: var(--sidebar-active);
+  }
+}
+
+/* Tanıtım sayfası: ürün görseli sayfa açılırken yerine oturur. Yalnız konum oynar; içerik hep görünürdür. */
+@keyframes settle {
+  from {
+    translate: 0 24px;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+.motion-settle {
+  animation: settle 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Kutlama blokları: yukarıdan düşer, yana kayar ve döner. */
+@keyframes confetti-fall {
+  from {
+    transform: translate3d(0, -12vh, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(var(--drift), 108vh, 0) rotate(var(--turn));
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  border-radius: 3px;
+  animation: confetti-fall 1800ms cubic-bezier(0.25, 0.5, 0.5, 1) both;
+}
+
+/* Bloklar yerine otururken hafifçe büyür; içerik her zaman görünürdür. */
+@keyframes block-in {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.motion-block {
+  animation: block-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

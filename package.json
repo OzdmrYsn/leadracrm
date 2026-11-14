@@ -1,0 +1,42 @@
+{
+  "name": "ysccrm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "bash scripts/db.sh ensure",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "tokens": "node scripts/tokens.mjs",
+    "db:reset": "bash scripts/db.sh reset",
+    "db:test": "bash replica/schema-test/run.sh",
+    "e2e": "playwright test",
+    "brand-icons": "node scripts/brand-icons.mjs"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@tanstack/react-query": "^5.107.1",
+    "lucide-react": "^1.72.0",
+    "next": "16.4.6",
+    "postgres": "^4.1.1",
+    "radix-ui": "^1.8.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "simple-icons": "^16.37.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5"
+  }
+}
