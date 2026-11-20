@@ -31,7 +31,7 @@ export function SettingsFrame({ ws, children }: { ws: string; children: ReactNod
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex h-8 shrink-0 items-center rounded-md px-3 text-sm font-medium transition-colors",
-                active ? "bg-ink text-on-ink" : "text-muted hover:bg-surface-strong hover:text-fg",
+                active ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-surface-strong hover:text-fg",
               )}
             >
               {item.label}

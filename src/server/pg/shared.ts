@@ -261,7 +261,7 @@ export async function messages(ctx: Ctx, where: Fragment): Promise<Message[]> {
   const rows = await sql<Message[]>`
     select m.id, m.conversation_id, m.direction, m.sender_kind,
       case when m.sender_kind = 'contact' then ct.name else p.full_name end as sender_name,
-      coalesce(m.body, '') as body, m.status, m.client_token, m.created_at
+      coalesce(m.body, '') as body, m.status, m.error_code, m.client_token, m.created_at
     from messages m
     join conversations c on c.id = m.conversation_id
     join contacts ct on ct.id = c.contact_id

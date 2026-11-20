@@ -35,6 +35,7 @@ function Thread({ ws, conversation, onBack }: { ws: string; conversation: Conver
   const now = useNow();
   const locale = session.data?.workspace.locale ?? "tr-TR";
   const timeZone = session.data?.workspace.timezone ?? "UTC";
+  const dateFormat = session.data?.workspace.dateFormat ?? "text";
   const markReadMutate = markRead.mutate;
   const conversationId = conversation.id;
   const unread = conversation.unreadCount;
@@ -126,7 +127,7 @@ function Thread({ ws, conversation, onBack }: { ws: string; conversation: Conver
             }
           />
         ) : (
-          <Feed items={items} now={now} locale={locale} timeZone={timeZone} label={t.chat.messages} />
+          <Feed ws={ws} items={items} now={now} locale={locale} timeZone={timeZone} dateFormat={dateFormat} label={t.chat.messages} />
         )}
       </div>
       {conversation.leadIsIncoming && conversation.leadId ? (
@@ -159,6 +160,7 @@ export function InboxScreen({ ws }: { ws: string }) {
 
   const locale = session.data?.workspace.locale ?? "tr-TR";
   const timeZone = session.data?.workspace.timezone ?? "UTC";
+  const dateFormat = session.data?.workspace.dateFormat ?? "text";
   const list = conversations.data ?? [];
   const selected = (everything.data ?? []).find((conversation) => conversation.id === selectedId) ?? null;
 
@@ -194,7 +196,7 @@ export function InboxScreen({ ws }: { ws: string }) {
                   onClick={() => setStatus(option)}
                   className={cn(
                     "h-8 rounded-md px-3 text-sm font-medium transition-colors",
-                    status === option ? "bg-ink text-on-ink" : "text-muted hover:bg-surface-strong hover:text-fg",
+                    status === option ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-surface-strong hover:text-fg",
                   )}
                 >
                   {option === "open" ? t.inbox.filterOpen : t.inbox.filterAll}
@@ -233,7 +235,7 @@ export function InboxScreen({ ws }: { ws: string }) {
                       name={conversation.contactName}
                       channel={t.chat.channel[conversation.channel.kind]}
                       preview={conversation.lastMessagePreview ?? ""}
-                      time={conversation.lastMessageAt ? formatClock(conversation.lastMessageAt, now, locale, timeZone) : ""}
+                      time={conversation.lastMessageAt ? formatClock(conversation.lastMessageAt, now, locale, timeZone, dateFormat) : ""}
                       unread={conversation.unreadCount}
                       unreadLabel={fill(t.nav.unread, { count: conversation.unreadCount })}
                       selected={conversation.id === selectedId}

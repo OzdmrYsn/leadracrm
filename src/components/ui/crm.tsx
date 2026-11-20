@@ -20,13 +20,19 @@ export function StageHeader({
   /** Örn. "₺184.500". */
   total?: string;
 }) {
+  // Aşamanın kimliği başlığın altındaki ince renkli çizgidir; ad büyük harfle, sayı ve tutar altında durur.
   return (
-    <header className="flex flex-col gap-2 rounded-xl px-3.5 py-3 text-ink shadow-block" style={{ background: `var(--stage-bright-${color})` }}>
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="truncate text-sm font-bold text-ink">{name}</h3>
-        <span className="shrink-0 rounded-pill bg-ink px-2 py-0.5 text-xs text-on-ink">{countLabel}</span>
-      </div>
-      {total ? <p className="font-display text-lg text-ink tabular-nums">{total}</p> : null}
+    <header className="flex flex-col items-center gap-0.5 border-b-2 px-2 pb-2.5 text-center" style={{ borderColor: `var(--stage-strong-${color})` }}>
+      <h3 className="max-w-full truncate text-sm font-bold tracking-wide text-fg uppercase">{name}</h3>
+      <p className="flex max-w-full flex-wrap items-baseline justify-center gap-x-1.5 text-xs text-muted tabular-nums">
+        <span>{countLabel}</span>
+        {total ? (
+          <>
+            <span aria-hidden>·</span>
+            <span className="font-semibold text-fg">{total}</span>
+          </>
+        ) : null}
+      </p>
     </header>
   );
 }
@@ -36,6 +42,8 @@ export function StageHeader({
 export type LeadCardProps = {
   name: string;
   contact?: string;
+  /** Karttaki avatarın baş harfleri bu addan gelir (kişi adı). Verilmezse lead adı kullanılır. */
+  avatarName?: string;
   price?: string;
   lastMessage?: string;
   time?: string;
@@ -57,6 +65,7 @@ export type LeadCardProps = {
 export function LeadCard({
   name,
   contact,
+  avatarName,
   price,
   lastMessage,
   time,
@@ -70,56 +79,61 @@ export function LeadCard({
   href,
   actions,
 }: LeadCardProps) {
+  // Yoğun, düz kart: solda kişi, üstte kimden ve ne zaman, altında vurgu renginde lead adı, en altta tutar ve durum.
   return (
     <article
-      data-surface="light"
       className={cn(
-        "relative flex flex-col gap-2 rounded-xl bg-bg p-3.5 shadow-card transition-[box-shadow,translate] duration-(--motion-base) hover:-translate-y-0.5 hover:shadow-lift",
-        dragging && "rotate-2 shadow-modal",
+        "relative flex gap-2.5 rounded-md border bg-bg p-3 transition-[box-shadow,border-color] hover:border-border-input hover:shadow-card",
+        dragging && "rotate-2 border-accent shadow-pop",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="truncate text-sm font-semibold text-fg">
-            {href ? (
-              // after: bağlantının tıklama alanını kartın tamamına yayar.
-              <Link href={href} draggable={false} className="rounded-sm after:absolute after:inset-0 after:rounded-xl">
-                {name}
-              </Link>
-            ) : (
-              name
-            )}
-          </h4>
-          {contact ? <p className="truncate text-xs text-muted">{contact}</p> : null}
+      <Avatar name={avatarName || name} locale={locale} decorative />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-col gap-0.5">
+          <div className={cn("flex items-baseline justify-between gap-2", actions ? "pr-7" : null)}>
+            <p className="min-w-0 truncate text-xs text-muted">{contact}</p>
+            <span className="shrink-0 text-xs text-muted">{time}</span>
+          </div>
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="min-w-0 text-sm font-semibold break-words text-accent">
+              {href ? (
+                // after: bağlantının tıklama alanını kartın tamamına yayar.
+                <Link href={href} draggable={false} className="rounded-sm underline-offset-2 after:absolute after:inset-0 after:rounded-md hover:underline">
+                  {name}
+                </Link>
+              ) : (
+                name
+              )}
+            </h4>
+            <CountBadge count={unread} label={unreadLabel} />
+          </div>
         </div>
-        <div className="relative z-10 flex shrink-0 items-center gap-1">
-          <CountBadge count={unread} label={unreadLabel} />
-          {actions}
-        </div>
-      </div>
-      {lastMessage ? <p className="line-clamp-2 text-sm text-muted">{lastMessage}</p> : null}
-      {tags?.length ? (
-        <div className="flex flex-wrap gap-1">
-          {tags.map((tag) => (
-            <Tag key={tag.label} color={tag.color}>
-              {tag.label}
-            </Tag>
-          ))}
-        </div>
-      ) : null}
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-display text-base font-bold text-fg tabular-nums">{price}</span>
-        <span className="flex items-center gap-2 text-xs text-muted">
-          {noTaskLabel ? (
-            <span className="inline-flex items-center gap-1 text-warning">
-              <TriangleAlert aria-hidden className="size-3" />
-              {noTaskLabel}
+        {lastMessage ? <p className="line-clamp-2 text-sm text-muted">{lastMessage}</p> : null}
+        {tags?.length ? (
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <Tag key={tag.label} color={tag.color}>
+                {tag.label}
+              </Tag>
+            ))}
+          </div>
+        ) : null}
+        {price || noTaskLabel || owner ? (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-fg tabular-nums">{price}</span>
+            <span className="flex items-center gap-2 text-xs">
+              {noTaskLabel ? (
+                <span className="inline-flex items-center gap-1 font-medium text-warning">
+                  <TriangleAlert aria-hidden className="size-3" />
+                  {noTaskLabel}
+                </span>
+              ) : null}
+              {owner ? <Avatar name={owner} size="sm" locale={locale} /> : null}
             </span>
-          ) : null}
-          {time}
-          {owner ? <Avatar name={owner} size="sm" locale={locale} /> : null}
-        </span>
+          </div>
+        ) : null}
       </div>
+      {actions ? <div className="absolute top-1.5 right-1.5 z-10">{actions}</div> : null}
     </article>
   );
 }
@@ -199,6 +213,8 @@ export function MessageBubble({
   status,
   statusLabel = "",
   author,
+  failure,
+  action,
   children,
 }: {
   direction: "in" | "out";
@@ -209,6 +225,10 @@ export function MessageBubble({
   statusLabel?: string;
   /** Mesajı yazan: giden mesajda kullanıcı ya da bot (görünür), gelen mesajda müşteri (yalnız ekran okuyucuya). */
   author?: string;
+  /** Gönderilemediyse neden, örn. "kişi botu engellemiş". */
+  failure?: string;
+  /** Gönderilemeyen mesajın altındaki eylem, örn. "Yeniden dene" düğmesi. */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   const out = direction === "out";
@@ -216,8 +236,8 @@ export function MessageBubble({
     <div className={cn("flex", out ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "flex max-w-[75%] flex-col gap-1 rounded-lg px-3 py-2 shadow-card",
-          out ? "rounded-br-sm bg-bubble-out" : "rounded-bl-sm bg-bubble-in",
+          "flex max-w-[75%] flex-col gap-1 rounded-lg border px-3 py-2",
+          out ? "rounded-br-sm border-transparent bg-bubble-out" : "rounded-bl-sm bg-bubble-in",
         )}
       >
         {/* Gelen mesajın kimden olduğu konumdan ve renkten anlaşılır; ekran okuyucu için adı ayrıca söylenir. */}
@@ -227,7 +247,13 @@ export function MessageBubble({
           <time>{time}</time>
           {out && status ? <StatusIcon status={status} label={statusLabel} /> : null}
         </p>
-        {status === "failed" ? <p className="text-xs text-danger">{statusLabel}</p> : null}
+        {status === "failed" ? (
+          <p className="text-xs text-danger">
+            {statusLabel}
+            {failure ? `: ${failure}` : null}
+          </p>
+        ) : null}
+        {status === "failed" && action ? <div className="flex justify-end">{action}</div> : null}
       </div>
     </div>
   );

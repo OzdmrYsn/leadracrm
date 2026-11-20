@@ -5,10 +5,13 @@
 export { DataError } from "./errors";
 export { createAutomation, deleteAutomation, listAutomations, updateAutomation } from "./pg/automations";
 export { createIntake, deleteIntake, importLeads, listIntakes, noteIntakeError, receiveIntake, rotateIntake, updateIntake } from "./pg/intake";
+export * from "./pg/billing";
+export * from "./pg/channels";
 export * from "./pg/chat";
 export { exportCompanies, exportContacts, exportLeads } from "./pg/exports";
 export * from "./pg/fields";
 export { getInsights } from "./pg/insights";
+export * from "./pg/invitations";
 export * from "./pg/leads";
 export * from "./pg/pipelines";
 export * from "./pg/records";

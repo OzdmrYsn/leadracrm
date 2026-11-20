@@ -21,17 +21,17 @@ const COLUMNS: Column[] = [
 /** Tanıtım ve giriş sayfalarındaki pano görseli: gerçek ekranın küçük bir benzeri, HTML ile çizilir. */
 export function MiniBoard({ className }: { className?: string }) {
   return (
-    <div aria-hidden className={cn("grid grid-cols-3 gap-3 rounded-xl bg-ink-raised p-3 text-fg shadow-lift select-none", className)}>
+    <div aria-hidden className={cn("grid grid-cols-3 gap-3 rounded-lg border bg-surface p-3 text-fg shadow-lift select-none", className)}>
       {COLUMNS.map((column) => (
         <div key={column.name} className="flex min-w-0 flex-col gap-2">
-          <div className="rounded-lg px-2.5 py-2 text-ink shadow-block" style={{ background: `var(--stage-bright-${column.color})` }}>
-            <p className="truncate text-xs font-bold text-ink">{column.name}</p>
-            <p className="font-display text-sm font-bold text-ink">{column.total}</p>
+          <div className="flex flex-col items-center gap-0.5 border-b-2 pb-2" style={{ borderColor: `var(--stage-strong-${column.color})` }}>
+            <p className="max-w-full truncate text-xs font-bold tracking-wide text-fg uppercase">{column.name}</p>
+            <p className="text-xs text-muted">{column.total}</p>
           </div>
           {column.cards.map((card) => (
-            <div key={card.name} className="flex flex-col gap-1.5 rounded-lg bg-bg p-2.5 shadow-card">
-              <p className="truncate text-xs font-semibold text-fg">{card.name}</p>
+            <div key={card.name} className="flex flex-col gap-1 rounded-md border bg-bg p-2.5">
               <p className="truncate text-xs text-muted">{card.who}</p>
+              <p className="truncate text-xs font-semibold text-accent">{card.name}</p>
               {card.tag ? (
                 <span className="w-fit rounded-sm px-1.5 py-0.5 text-xs text-fg" style={{ backgroundColor: `var(--stage-${column.color})` }}>
                   {card.tag}

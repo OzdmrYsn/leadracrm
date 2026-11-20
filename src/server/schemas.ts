@@ -64,6 +64,8 @@ export const workspacePatchSchema = z.object({
     .regex(/^[A-Z]{3}$/)
     .optional(),
   timezone: z.string().min(1).max(64).optional(),
+  timeFormat: z.enum(["12", "24"]).optional(),
+  dateFormat: z.enum(["text", "dmy", "mdy", "ymd"]).optional(),
 });
 
 export const profilePatchSchema = z.object({ name: z.string().trim().min(1).max(120) });

@@ -1,4 +1,4 @@
-import { card, column, expect, fill, gotoBoard, STAGE, t, test } from "./support";
+import { card, column, expect, fill, gotoBoard, id, STAGE, t, test, WS } from "./support";
 import type { Page } from "@playwright/test";
 
 const stageNames = { incoming: "Gelen talepler", open: ["Bir"], won: "Kazanıldı", lost: "Kaybedildi" };
@@ -85,6 +85,32 @@ test.describe("F09 pipeline ve aşamaları kur", () => {
     await expect.poll(() => columnNames(page)).toEqual([STAGE.incoming, STAGE.first, STAGE.talk, "Fiyat teklifi"]);
   });
 
+  test("F09-H3 pipeline listede yukarı ve aşağı taşınır; ana pipeline başta kalır", async ({ page, api }) => {
+    for (const name of ["Bayi", "İhracat"]) expect((await api.post("/pipelines", { name, stageNames: t.pipeline.defaultStages })).status).toBe(201);
+    const names = async () => ((await api.get("/session")).pipelines as Array<{ name: string }>).map((pipeline) => pipeline.name);
+    expect(await names()).toEqual(["Satış", "Bayi", "İhracat"]);
+
+    await gotoBoard(page);
+    const menu = page.getByRole("button", { name: t.pipeline.menu });
+    // Ana pipeline seçiliyken sıralama seçenekleri yoktur.
+    await menu.click();
+    await expect(page.getByRole("menuitem", { name: t.pipeline.listUp })).toHaveCount(0);
+    await page.getByRole("menuitem", { name: "İhracat", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "İhracat", level: 1 })).toBeVisible();
+
+    await menu.click();
+    await expect(page.getByRole("menuitem", { name: t.pipeline.listDown })).toBeDisabled();
+    await page.getByRole("menuitem", { name: t.pipeline.listUp }).click();
+    await expect(page.getByRole("status").filter({ hasText: fill(t.pipeline.reordered, { name: "İhracat", position: 2 }) })).toHaveCount(1);
+    expect(await names()).toEqual(["Satış", "İhracat", "Bayi"]);
+
+    // Menüdeki sıra da değişir; artık başta olduğu için yukarı taşınamaz.
+    await menu.click();
+    await expect(page.getByRole("menuitem", { name: t.pipeline.listUp })).toBeDisabled();
+    const order = await page.getByRole("menuitem").allInnerTexts();
+    expect(order.slice(0, 3).map((text) => text.trim())).toEqual(["Satış", fill(t.pipeline.current, { name: "İhracat" }), "Bayi"]);
+  });
+
   test("F09-E1 lead'i olan aşama silinirken lead'lerin gideceği aşama sorulur ve lead'ler taşınır", async ({ page, api }) => {
     await gotoBoard(page);
     const dialog = await openEdit(page);
@@ -138,6 +164,7 @@ test.describe("F09 pipeline ve aşamaları kur", () => {
       await expect(dialog.getByRole("button", { name: fill(t.pipeline.deleteStage, { name: STAGE.talk }) })).toBeDisabled();
 
       expect((await api.post("/pipelines", { name: "İzinsiz", stageNames })).status).toBe(403);
+      expect((await page.request.put(`/api/w/${WS}/pipelines/order`, { data: { pipelineIds: [id("p-sales")] } })).status()).toBe(403);
       expect((await api.patch("/stages/s-talk", { name: "İzinsiz" })).status).toBe(403);
       expect((await api.post("/pipelines/p-main/stages", { name: "İzinsiz" })).status).toBeGreaterThanOrEqual(403);
       expect((await api.get("/session")).pipelines[0].stages.map((stage: { name: string }) => stage.name)).not.toContain("İzinsiz");
@@ -146,6 +173,19 @@ test.describe("F09 pipeline ve aşamaları kur", () => {
 
   test.describe("sınırlar ve sistem aşamaları (API)", () => {
     test.use({ allow4xx: [404, 409, 422] });
+
+    test("F09-E8 sıralama listesi bütün pipeline'ları tam bir kez içermelidir", async ({ page, api }) => {
+      const created = await api.post("/pipelines", { name: "Bayi", stageNames });
+      const order = (pipelineIds: string[]) => page.request.put(`/api/w/${WS}/pipelines/order`, { data: { pipelineIds } });
+      const main = id("p-sales");
+      expect((await order([main])).status()).toBe(422);
+      expect((await order([main, main])).status()).toBe(422);
+      expect((await order([main, created.body.id, id("p-other")])).status()).toBe(422);
+      expect((await order([])).status()).toBe(422);
+      // Ana pipeline sona yazılsa da listede başta kalır.
+      expect((await order([created.body.id, main])).status()).toBe(200);
+      expect(((await api.get("/session")).pipelines as Array<{ name: string }>).map((pipeline) => pipeline.name)).toEqual(["Satış", "Bayi"]);
+    });
 
     test("F09-E5 en çok 50 pipeline", async ({ api }) => {
       for (let index = 2; index <= 50; index += 1) {

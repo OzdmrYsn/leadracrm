@@ -8,7 +8,8 @@ import { Button, ToggleButton } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { EmptyState, Skeleton } from "@/components/ui/feedback";
 import { fill, useI18n } from "@/i18n";
-import { addDays, addMonths, dayOf, dayRange, monthGrid, timeOf, weekDays, zonedToUtc } from "@/lib/dates";
+import { addDays, addMonths, dayOf, dayRange, monthGrid, weekDays, zonedToUtc } from "@/lib/dates";
+import { formatTime } from "@/lib/format";
 import { useNow, useSession, useTasks } from "@/lib/hooks";
 import type { Task } from "@/lib/types";
 import { TaskDialog } from "./task-dialog";
@@ -19,7 +20,7 @@ type View = "day" | "week" | "month";
 /** Gün etiketleri saat diliminden bağımsız olsun diye günün öğlesi alınır. */
 const noon = (day: string, timeZone: string) => zonedToUtc(day, "12:00", timeZone);
 
-function Chip({ ws, task, now, timeZone }: { ws: string; task: Task; now: number; timeZone: string }) {
+function Chip({ ws, task, now, locale, timeZone }: { ws: string; task: Task; now: number; locale: string; timeZone: string }) {
   const { t } = useI18n();
   const done = task.completedAt !== null;
   const overdue = !done && new Date(task.dueAt).getTime() < now;
@@ -34,7 +35,7 @@ function Chip({ ws, task, now, timeZone }: { ws: string; task: Task; now: number
       )}
     >
       {done ? <Check aria-hidden className="size-3 shrink-0" /> : null}
-      <span className="shrink-0 tabular-nums">{timeOf(task.dueAt, timeZone)}</span>
+      <span className="shrink-0 tabular-nums">{formatTime(task.dueAt, locale, timeZone)}</span>
       <span className="truncate">{task.text || task.typeName}</span>
       {done ? <span className="sr-only">{t.tasks.done}</span> : overdue ? <span className="sr-only">{t.tasks.overdue}</span> : null}
     </Link>
@@ -47,6 +48,7 @@ export function CalendarScreen({ ws }: { ws: string }) {
   const now = useNow();
   const timeZone = session.data?.workspace.timezone ?? "UTC";
   const locale = session.data?.workspace.locale ?? "tr-TR";
+  const dateFormat = session.data?.workspace.dateFormat ?? "text";
   const today = dayOf(now, timeZone);
 
   const [view, setView] = useState<View>("week");
@@ -138,7 +140,7 @@ export function CalendarScreen({ ws }: { ws: string }) {
             </h3>
             <ul className="flex flex-col gap-2">
               {late.map((task) => (
-                <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} showTarget />
+                <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} dateFormat={dateFormat} showTarget />
               ))}
             </ul>
           </section>
@@ -165,7 +167,7 @@ export function CalendarScreen({ ws }: { ws: string }) {
           ) : (
             <ul className="flex flex-col gap-2">
               {(byDay.get(day) ?? []).map((task) => (
-                <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} showTarget />
+                <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} dateFormat={dateFormat} showTarget />
               ))}
             </ul>
           )
@@ -188,7 +190,7 @@ export function CalendarScreen({ ws }: { ws: string }) {
                   {list.length === 0 ? (
                     <span className="text-xs text-muted">{t.calendar.emptyDay}</span>
                   ) : (
-                    list.map((task) => <Chip key={task.id} ws={ws} task={task} now={now} timeZone={timeZone} />)
+                    list.map((task) => <Chip key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} />)
                   )}
                 </li>
               );
@@ -223,7 +225,7 @@ export function CalendarScreen({ ws }: { ws: string }) {
                     </button>
                     <div className="hidden flex-col gap-1 sm:flex">
                       {list.slice(0, 3).map((task) => (
-                        <Chip key={task.id} ws={ws} task={task} now={now} timeZone={timeZone} />
+                        <Chip key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} />
                       ))}
                       {list.length > 3 ? <span className="px-1 text-xs text-muted">{fill(t.calendar.more, { count: list.length - 3 })}</span> : null}
                     </div>

@@ -43,7 +43,7 @@ export function Confetti({ burst }: { burst: number }) {
               left: `${piece.left}%`,
               width: piece.size,
               height: Math.round(piece.size * 0.62),
-              background: `var(--stage-bright-${piece.color})`,
+              background: `var(--stage-strong-${piece.color})`,
               animationDelay: `${piece.delay}ms`,
               animationDuration: `${piece.duration}ms`,
               "--drift": `${piece.drift}px`,

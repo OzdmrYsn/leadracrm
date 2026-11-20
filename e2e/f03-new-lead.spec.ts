@@ -1,4 +1,4 @@
-import { card, column, expect, expectNoHorizontalOverflow, feed, fill, gotoBoard, STAGE, t, test } from "./support";
+import { card, column, expect, expectNoA11yViolations, expectNoHorizontalOverflow, feed, fill, gotoBoard, STAGE, t, test } from "./support";
 import type { Page } from "@playwright/test";
 
 const PRICE = fill(t.newLead.price, { currency: "TRY" });
@@ -39,6 +39,23 @@ test.describe("F03 lead'i elle oluştur", () => {
     await created.getByRole("link", { name: "Salon kitaplığı" }).click();
     await expect(page.getByRole("heading", { name: "Salon kitaplığı", level: 1 })).toBeVisible();
     await expect(feed(page).getByText(fill(t.event.created, { actor: "Ada Yıldız" }))).toBeVisible();
+  });
+
+  test("F03-H2 ilk sütundaki hızlı ekleme aynı pencereyi o aşama seçili açar; kapanınca odak sütundaki düğmeye döner", async ({ page }) => {
+    await gotoBoard(page);
+    const quick = column(page, STAGE.first).getByRole("button", { name: fill(t.board.quickAddLabel, { stage: STAGE.first }) });
+    await expect(quick).toBeVisible();
+    // Düğme yalnız ilk açık aşamadadır.
+    await expect(page.getByRole("button", { name: new RegExp(`^${t.board.quickAdd}`) })).toHaveCount(1);
+    await expectNoA11yViolations(page);
+    await quick.click();
+    const dialog = page.getByRole("dialog", { name: t.newLead.title });
+    await expect(dialog.getByRole("combobox", { name: t.newLead.stage })).toContainText(STAGE.first);
+    await dialog.getByLabel(t.newLead.name).fill("Hızlı eklenen");
+    await dialog.getByRole("button", { name: t.newLead.submit }).click();
+    await expect(dialog).toBeHidden();
+    await expect(card(column(page, STAGE.first), "Hızlı eklenen")).toBeVisible();
+    await expect(quick).toBeFocused();
   });
 
   test("F03-N1 var olan kişi aranıp bağlanır; aynı adla ikinci kişi oluşmaz", async ({ page, api }) => {

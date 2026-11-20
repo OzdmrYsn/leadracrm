@@ -119,7 +119,7 @@ export function LeadsScreen({ ws }: { ws: string }) {
           >
             {t.board.viewBoard}
           </Link>
-          <span aria-current="page" className="flex h-8 items-center rounded-md bg-ink px-3 text-sm font-medium text-on-ink">
+          <span aria-current="page" className="flex h-8 items-center rounded-md bg-accent-soft px-3 text-sm font-semibold text-accent">
             {t.board.viewList}
           </span>
         </nav>
@@ -264,7 +264,7 @@ export function LeadsScreen({ ws }: { ws: string }) {
                       {trash ? (
                         <span className="block truncate text-fg">{lead.name}</span>
                       ) : (
-                        <Link href={`/w/${ws}/leads/${lead.id}`} className="block truncate rounded-sm text-fg underline-offset-4 hover:underline">
+                        <Link href={`/w/${ws}/leads/${lead.id}`} className="block truncate rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
                           {lead.name}
                         </Link>
                       )}

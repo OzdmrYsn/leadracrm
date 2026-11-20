@@ -8,7 +8,7 @@
 
 LeadraCRM küçük satış ekipleri içindir: gelen talepleri tek panoda toplar, kimin neyle ilgilendiğini gösterir, yapılacakları hatırlatır ve hangi işin nerede takıldığını raporlar.
 
-> **Durum: erken sürüm.** Uygulama kendi bilgisayarınızda uçtan uca çalışır ve 279 uçtan uca testle denetlenir. Gerçek kimlik doğrulama, mesajlaşma kanalları (WhatsApp, Instagram, Telegram ve diğerleri), e-posta ve ödeme henüz bağlı değildir. Ayrıntı için [Durum](#durum) bölümüne bakın.
+> **Durum: erken sürüm.** Uygulama kendi bilgisayarınızda uçtan uca çalışır ve 304 uçtan uca testle denetlenir. Kayıt ve giriş, kullanıcı daveti, abonelik ve koltuk, Telegram kanalı kuruludur; ancak e-posta gönderimi, ödeme ve Telegram yalnız yerel taklitlere karşı denenmiştir, gerçek hizmetlerle doğrulanmamıştır. Diğer mesajlaşma kanalları henüz yoktur. Ayrıntı için [Durum](#durum) bölümüne bakın.
 
 ## İçindekiler
 
@@ -31,23 +31,24 @@ Aşağıdaki görüntülerin tamamı uygulamanın kendisinden, depodaki örnek v
 
 ### Bugün
 
-Uygulama sizi günün özetiyle karşılar: yoldaki satışın tutarı, son yedi günün yeni ve kazanılan lead'leri, satış hattınız (her aşama içindeki tutarla orantılı bir blok), bugünün ve geciken görevleriniz, yanıt bekleyen konuşmalar.
+Uygulama sizi günün özetiyle karşılar: yoldaki satışın tutarı, son yedi günün yeni ve kazanılan lead'leri, satış hattınız (üstündeki renk şeridi her aşamanın tutardaki payını gösterir), bugünün ve geciken görevleriniz, yanıt bekleyen konuşmalar.
 
-![Bugün ekranı: selamlama, üç özet rakam, aşama blokları, görevler ve yanıt bekleyenler](docs/screenshots/bugun.png)
+![Bugün ekranı: selamlama, üç özet rakam, satış hattı, görevler ve yanıt bekleyenler](docs/screenshots/bugun.png)
 
 ### Pano
 
-Satış hattınız sütunlar hâlinde durur. Her aşama kendi renginde bir bloktur; üzerinde lead sayısı ve toplam tutar yazar.
+Satış hattınız sütunlar hâlinde durur. Her aşamanın başlığında lead sayısı ve toplam tutar yazar; altındaki ince çizgi aşamanın rengindedir. Kartta kişi, şirket, son mesaj, etiketler, tutar ve sorumlu bir bakışta görünür.
 
 - Kartı sürükleyerek ya da kart menüsünden (klavyeyle de) başka aşamaya taşırsınız.
-- Birden çok satış hattı açabilir; aşamaları ekler, adlandırır, renklendirir, sıralar ve silersiniz.
+- İlk aşamanın başındaki "Hızlı ekle" ile panodan ayrılmadan lead açarsınız.
+- Birden çok satış hattı açabilir, listedeki sıralarını değiştirebilirsiniz; aşamaları ekler, adlandırır, renklendirir, sıralar ve silersiniz.
 - "Gelen talepler" sütunu yeni talepleri bekletir: kabul eder, reddeder ya da var olan bir lead'e bağlarsınız.
 - Hazır süzgeçler (Benim, Görevsiz, Okunmamış), özel süzgeç (sorumlu, aşama, tarih, etiket) ve kayıtlı süzgeçler vardır.
 - Görevi olmayan lead kartında uyarı çıkar.
 
-![Pano: koyu zemin üstünde renkli aşama blokları ve beyaz lead kartları](docs/screenshots/pano.png)
+![Pano: açık zeminde renkli çizgili aşama başlıkları ve lead kartları](docs/screenshots/pano.png)
 
-Bir lead "Kazanıldı"ya taşındığında pano bunu kutlar: renkli bloklar düşer, üstte lead'in adı ve tutarı belirir. Hareketi azaltmayı seçen kullanıcılarda yalnız şerit görünür.
+Bir lead "Kazanıldı"ya taşındığında pano bunu kutlar: renkli parçalar düşer, üstte lead'in adı ve tutarı belirir. Hareketi azaltmayı seçen kullanıcılarda yalnız şerit görünür.
 
 ![Kazanılan satış kutlaması: üstte “Kazanıldı · Mutfak yenileme · ₺64.000” şeridi ve düşen renkli parçalar](docs/screenshots/kutlama.png)
 
@@ -79,15 +80,15 @@ Bütün konuşmalar tek listede. Konuşmayı bir ekip üyesine atar, kapatır, i
 
 ### Takvim ve görevler
 
-Görevler gün, hafta ve ay görünümünde. Her görevin son tarihi, sorumlusu, türü (takip, toplantı ya da sizin eklediğiniz) vardır; görev sonuç yazılarak tamamlanır. Gecikenler ayrı bölümde durur.
+Görevler gün, hafta ve ay görünümünde. Her görevin son tarihi, sorumlusu ve türü vardır; Takip ve Toplantı hazır gelir, yönetici kendi türlerini ekler. Görev sonuç yazılarak tamamlanır. Gecikenler ayrı bölümde durur.
 
 ![Takvim: ay görünümünde görevler](docs/screenshots/takvim.png)
 
 ### Kaynaklar
 
-Lead'in nereden geleceğini buradan bağlarsınız. Bugün bağlanabilenler: **Google Sheets, Google Forms, Zapier, Make, n8n, kendi sisteminiz (gizli bir adrese veri gönderen her şey) ve dosyadan içe aktarma.** Her kaynak için lead'in düşeceği aşamayı ve eklenecek etiketi seçersiniz.
+Lead'in nereden geleceğini buradan bağlarsınız. Bugün bağlanabilenler: **Google Sheets, Google Forms, Telegram (kendi botunuzun belirteciyle), Zapier, Make, n8n, kendi sisteminiz (gizli bir adrese veri gönderen her şey) ve dosyadan içe aktarma.** Her kaynak için lead'in düşeceği aşamayı ve eklenecek etiketi seçersiniz.
 
-Mesajlaşma kanalları (WhatsApp, Instagram, Messenger, Telegram, TikTok, Viber, e-posta, SMS, site sohbeti) aynı ekranda "Sırada" başlığı altında listelenir; henüz bağlanamaz.
+Telegram'da bota yazan kişi gelen taleplere düşer, yanıt gelen kutusundan gider; gönderilemeyen mesajda neden yazar ve yeniden denenir. Diğer mesajlaşma kanalları (WhatsApp, Instagram, Messenger, TikTok, Viber, e-posta, SMS, site sohbeti) aynı ekranda "Sırada" başlığı altında listelenir; henüz bağlanamaz. (Aşağıdaki görüntü Telegram eklenmeden önce çekildi.)
 
 ![Kaynaklar: bağlanabilen kaynakların renkli karoları](docs/screenshots/kaynaklar.png)
 
@@ -123,9 +124,11 @@ Kişi ve şirket listeleri sıralanır, süzülür, aranır. Her kişinin ve şi
 
 ### Ekip ve yetkiler
 
-Yönetici her üyenin rolünü ve grubunu belirler, üyeyi pasifleştirebilir. Yetkiler bir matristen verilir: her bölüm ve eylem için dört düzeyden biri seçilir (örneğin "yalnız kendi lead'lerini görsün"). Bu kurallar yalnız arayüzde değil, veritabanında da uygulanır. Yeni kullanıcı daveti, gerçek giriş sistemi bağlandığında açılacaktır.
+Yönetici her üyenin rolünü ve grubunu belirler, üyeyi pasifleştirebilir. Çalışma alanı ayarlarında para birimi, saat dilimi, saat biçimi (12 ya da 24 saat) ve tarih biçimi seçilir. Yetkiler bir matristen verilir: her bölüm ve eylem için dört düzeyden biri seçilir (örneğin "yalnız kendi lead'lerini görsün"). Bu kurallar yalnız arayüzde değil, veritabanında da uygulanır. Yeni kullanıcı daveti, gerçek giriş sistemi bağlandığında açılacaktır.
 
 ![Ayarlar: kullanıcılar ve yetkiler](docs/screenshots/kullanicilar.png)
+
+![Çalışma alanı ayarları: ad, para birimi, saat dilimi, saat ve tarih biçimi](docs/screenshots/ayarlar.png)
 
 ### Hesap oluşturma
 
@@ -171,12 +174,13 @@ Ziyaretçi ürünü anlatan yazıyı okumadan önce dener: sayfanın başındaki
 | Dosyadan içe ve dosyaya dışa aktarma | Çalışıyor |
 | Dışarıdan lead alma (gizli adres), Zapier, Make, n8n, Google Forms | Çalışıyor |
 | Google hesabıyla tablo bağlama | Yalnız yerel Google taklidiyle denendi; gerçek anahtarlarla doğrulanmadı |
-| Gelen kutusu | Arayüz hazır; kanallar taklit |
-| Kayıt ve giriş | Yalnız geliştirme sağlayıcısı; üretimde kapalı |
-| Kullanıcı daveti | Yok (giriş sistemine bağlı) |
-| Mesajlaşma kanalları, e-posta, SMS, site sohbeti | Yok |
+| Telegram kanalı | Çalışıyor; yalnız yerel Telegram taklidiyle denendi |
+| Gelen kutusu | Telegram'da gerçek gönderim; örnek verideki diğer kanallar taklit |
+| Kayıt, giriş, e-posta doğrulama, şifre sıfırlama | Çalışıyor (uygulamanın kendi şifreli girişi); e-posta yalnız yerel giden kutusuyla denendi. Üretimde `APP_SECRET` ve bir e-posta anahtarı gerekir |
+| Kullanıcı daveti | Çalışıyor; koltuk denetimiyle |
+| Abonelik ve koltuk | Deneme, koltuk, aylık ya da yıllık dönem, tek tıkla iptal çalışıyor; gerçek ödeme sağlayıcısı bağlı değil (yalnız geliştirme taklidi), fiyat geçici |
+| WhatsApp, Instagram, Messenger, Viber, SMS, e-posta kutusu, site sohbeti | Yok |
 | Web formu, sohbet botu, şablonlar | Yok |
-| Ödeme ve abonelik | Yok |
 | Yasal sayfalar (gizlilik, koşullar) | Yok |
 | Canlı ortam (barındırma, alan adı) | Yok |
 | Dil | Yalnız Türkçe |
@@ -254,12 +258,12 @@ flowchart LR
 
 ```
 src/
-  app/                 sayfalar ve API uçları (72 route handler)
+  app/                 sayfalar ve API uçları (96 route handler)
     w/[ws]/            çalışma alanı ekranları: home, pipelines, leads, inbox, calendar, sources ...
-    api/               w/ (uygulama), intake/ (dış kaynaklar), google/, auth/, jobs/, dev/
+    api/               w/ (uygulama), intake/ (dış kaynaklar), hooks/ (kanal ve ödeme bildirimleri), google/, auth/, jobs/, dev/
   features/            ekranlar: board, lead, inbox, sources, home, landing, insights ...
   components/          app/ (kabuk), ui/ (temel bileşenler), brand/ (logo)
-  server/              pg/ (sorgular), google/ (Sheets ve Drive), auth, rate-limit, secret-box, schemas
+  server/              pg/ (sorgular), channels/ (kanal adaptörleri), billing/ (abonelik), google/, auth, password, mail, rate-limit, secret-box
   i18n/tr.ts           bütün arayüz metinleri
   styles/tokens.css    üretilen dosya; elle düzenlenmez
 supabase/
@@ -276,19 +280,19 @@ Kod yorumlarında adı geçen diğer `replica/*.md` dosyaları iç planlama notl
 
 ## Tasarım sistemi
 
-Görsel dil tek bir fikirden çıkar: satış hattı üst üste oturan basamaklardır. Koyu petrol zemin üstünde dolu, parlak renk blokları ve büyük rakamlar kullanılır; içerik koyu çerçevenin içinde yuvarlak köşeli bir sayfa olarak durur.
+Görsel dil üç kurala dayanır: açık zemin, ince çizgi, yoğun bilgi. Menü ve kartlar beyazdır; derinlik gölgeyle değil bir piksellik çizgilerle kurulur. Renk az ve anlamlıdır: petrol yeşili tıklanabilen şeyi, sarı dikkat isteyeni, aşama renkleri satış hattındaki yeri gösterir.
 
 - Bütün renk, yazı, aralık, köşe ve gölge değerleri `replica/design/tokens.json` dosyasındadır. `npm run tokens` bunları `src/styles/tokens.css` dosyasına çevirir.
 - Tailwind'in hazır renk paleti kapalıdır; bileşenlerde ham renk kodu yoktur.
 - Kullanıcının seçtiği renkler (aşama, etiket) renk kodu değil, 1 ile 8 arası bir palet anahtarıdır.
-- Arayüzde kullanılan 79 metin ve zemin çifti WCAG AA kontrast eşiğini geçer.
+- Arayüzde kullanılan 52 metin ve zemin çifti WCAG AA kontrast eşiğini geçer.
 - Hareket, hareketi azaltmayı seçen kullanıcılarda kapanır; hiçbir içerik bir canlandırmanın bitmesine bağlı değildir.
 - Yazı tipleri: Inter ve başlıklarda Bricolage Grotesque (ikisi de SIL Open Font License).
 - Temel bileşenler geliştirme ortamında `/design` adresinde tek sayfada görülür.
 
 ## Testler
 
-28 dosyada 279 uçtan uca test vardır. Her test örnek veriyi sıfırlar ve şunlardan birini görürse başarısız olur: tarayıcı konsolunda hata, sunucudan 5xx yanıtı, beklenmeyen 4xx yanıtı. Ekranlar axe ile WCAG 2.2 AA'ya göre taranır; ikinci bir kullanıcının verisinin görünmediği ayrıca denetlenir.
+30 dosyada 304 uçtan uca test vardır. Her test örnek veriyi sıfırlar ve şunlardan birini görürse başarısız olur: tarayıcı konsolunda hata, sunucudan 5xx yanıtı, beklenmeyen 4xx yanıtı. Ekranlar axe ile WCAG 2.2 AA'ya göre taranır; ikinci bir kullanıcının verisinin görünmediği ayrıca denetlenir.
 
 ```bash
 npx playwright install chromium   # yalnız ilk seferde
@@ -303,7 +307,9 @@ npm run db:test
 - Kayıt, giriş ve dış kaynak uçlarında hız sınırı vardır.
 - Dış kaynak adresleri gizli bir anahtar taşır; anahtar yenilenebilir.
 - Google yenileme anahtarı veritabanında AES-256-GCM ile şifreli saklanır (`APP_SECRET`).
-- **Geliştirme kolaylıkları üretimde çalışmaz:** `/api/dev/*` uçları ve `/design` sayfası 404 döner; şifre doğrulamayan geliştirme oturumu kapalıdır ve kayıt ile giriş uçları gerçek bir kimlik sağlayıcı bağlanana kadar 503 döner.
+- Şifreler scrypt özetiyle saklanır; oturum çerezi http-only'dir ve veritabanında yalnız özeti durur. Kanal anahtarları şifreli saklanır ve hiçbir yanıtta dönmez.
+- Abonelik durumu yalnız ödeme sağlayıcısının imzalı bildirimiyle değişir. Abonelik etkin değilken veritabanı işlemleri salt okunur açılır: veri okunur ve dışa aktarılır, yazılamaz.
+- **Geliştirme kolaylıkları üretimde çalışmaz:** `/api/dev/*` uçları, taklit hizmetler, `/dev/*` ve `/design` sayfaları 404 döner; oturum açmadan örnek yönetici sayılma yolu kapalıdır. Üretimde uygulama sırrı ve e-posta anahtarı tanımlı değilse kayıt ve giriş 503 döner.
 
 Bir güvenlik açığı bulursanız lütfen herkese açık bir kayıt açmak yerine depo sahibine özelden yazın.
 
@@ -319,17 +325,20 @@ Bütün adlar ve açıklamaları [`.env.example`](.env.example) dosyasındadır.
 | `CRON_SECRET` | Zamanlanmış işleri çağıranın göndereceği sır |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google hesabıyla tablo bağlama |
 | `NEXT_PUBLIC_GOOGLE_API_KEY`, `NEXT_PUBLIC_GOOGLE_APP_ID` | Google dosya seçici |
-| `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `INNGEST_*` | Henüz kullanılmıyor; sıradaki işler için ayrıldı |
+| `RESEND_API_KEY`, `MAIL_FROM` | Doğrulama, şifre sıfırlama ve davet e-postaları; yokken geliştirmede yerel giden kutusu |
+| `BILLING_SEAT_MONTHLY_MINOR`, `BILLING_CURRENCY` | Koltuk başına aylık tutar; verilmezse ekranda "geçici fiyat" yazar |
+| `TELEGRAM_API_URL` | İsteğe bağlı; verilmezse geliştirmede yerel Telegram taklidi kullanılır |
+| `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY`, `INNGEST_*` | Henüz kullanılmıyor |
 
 Google anahtarları yokken geliştirme ortamında yerel bir Google taklidi çalışır; böylece tablo bağlama akışı anahtarsız denenebilir.
 
 ## Yol haritası
 
-1. Gerçek kimlik doğrulama: e-posta doğrulama, şifre sıfırlama, hesap silme.
-2. Google bağlantısının gerçek anahtarlarla doğrulanması.
-3. İlk mesajlaşma kanalı ve gelen kutusunun gerçek gönderimi.
-4. E-posta bildirimleri ve zamanlanmış işler.
-5. Fiyatlandırma, ödeme ve yasal sayfalar.
+1. Gerçek hizmetlerle doğrulama: e-posta gönderimi, Telegram, Google bağlantısı.
+2. Ödeme sağlayıcısı ve kesin fiyat.
+3. Site sohbet penceresi, web formu, WhatsApp ve diğer kanallar.
+4. Profilden şifre değiştirme, iki adımlı doğrulama, hesap silme.
+5. Yasal sayfalar.
 6. Canlı ortam.
 
 ## Marka ve lisans

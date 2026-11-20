@@ -1,7 +1,7 @@
 // Dış hizmet anahtarlarını (ör. Google yenileme anahtarı) veritabanında şifreli saklamak ve kısa ömürlü
 // değerleri imzalamak için. Anahtar APP_SECRET ortam değişkeninden türetilir.
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { isProduction } from "./auth";
+import { isProduction } from "./env";
 import { DataError } from "./errors";
 
 function key(): Buffer {

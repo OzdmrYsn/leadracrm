@@ -90,7 +90,7 @@ export function CompanyScreen({ ws, companyId }: { ws: string; companyId: Id }) 
           <div className="px-2 py-1">
             <h2 className="text-xs text-muted">{t.common.created}</h2>
             <p className="text-sm text-fg">
-              <time dateTime={company.createdAt}>{formatDateTime(company.createdAt, workspace.locale, workspace.timezone)}</time>
+              <time dateTime={company.createdAt}>{formatDateTime(company.createdAt, workspace.locale, workspace.timezone, workspace.dateFormat)}</time>
             </p>
           </div>
         </section>
@@ -106,7 +106,7 @@ export function CompanyScreen({ ws, companyId }: { ws: string; companyId: Id }) 
                   <li key={contact.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                     <Link
                       href={`/w/${ws}/contacts/${contact.id}`}
-                      className="min-w-0 flex-1 truncate rounded-sm text-sm font-medium text-fg underline-offset-4 hover:underline"
+                      className="min-w-0 flex-1 truncate rounded-sm text-sm font-semibold text-accent underline-offset-2 hover:underline"
                     >
                       {contact.name}
                     </Link>

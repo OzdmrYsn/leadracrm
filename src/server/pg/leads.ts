@@ -5,11 +5,20 @@ import type { Tx } from "../db";
 import { DataError, isUuid, notFound } from "../errors";
 import { fireAutomations } from "./automations";
 import { applyCustom } from "./custom";
-import { checkUser, handoff, inWorkspace, listUsers, logEvent, requireAdmin, type Ctx } from "./ctx";
+import { subscriptionOf } from "./billing";
+import { checkUser, handoff, inWorkspace, listUsers, logEvent, requireAdmin, workspaceOf, type Ctx } from "./ctx";
 import { FULL_RIGHTS, requireAdd, requireCan } from "./rights";
 import { conversations, findCompany, findContact, findStage, leadFilter, leadSummaries, loadCompany, loadContact, loadPipeline, loadPipelines, messages, openStages, toTag } from "./shared";
 
 /* ---------- oturum ---------- */
+
+/** Şifre kaydı olmayan kullanıcı (yalnız örnek veride olabilir) doğrulanmış sayılır. Kimlik tablosunu yalnız sunucu rolü okur. */
+async function emailVerified(ctx: Ctx): Promise<boolean> {
+  const [row] = await ctx.system(() => ctx.sql<Array<{ ok: boolean }>>`
+    select (c.user_id is null or c.email_verified_at is not null) as ok
+    from profiles p left join user_credentials c on c.user_id = p.id where p.id = ${ctx.user.id}`);
+  return row?.ok ?? true;
+}
 
 export function getSession(ws: string): Promise<Session> {
   return inWorkspace(ws, async (ctx) => {
@@ -18,7 +27,9 @@ export function getSession(ws: string): Promise<Session> {
     return {
       user: ctx.user,
       rights: ctx.user.isAdmin ? FULL_RIGHTS : ctx.rights,
-      workspace: { slug: ctx.ws.slug, name: ctx.ws.name, currency: ctx.ws.currency, locale: ctx.ws.locale, timezone: ctx.ws.timezone },
+      workspace: workspaceOf(ctx.ws),
+      emailVerified: await emailVerified(ctx),
+      subscription: await subscriptionOf(ctx),
       users: await listUsers(ctx),
       pipelines: await loadPipelines(ctx),
       taskTypes: taskTypes.map((type) => ({ ...type })),

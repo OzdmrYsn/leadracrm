@@ -5,7 +5,11 @@
 
 -- Kullanıcılar. Yerelde auth şeması bir taklittir; gerçek Supabase'de kullanıcılar Auth üzerinden açılır.
 insert into auth.users (id, email, raw_user_meta_data) values ('bcff588f-b12e-5a2d-a12e-8710933dbabf', 'ada@ornek.test', '{"full_name": "Ada Yıldız"}'::jsonb);
+-- Örnek kullanıcının deneme şifresi: "deneme-sifresi" (yalnız yerel geliştirme verisi).
+insert into user_credentials (user_id, password_hash, email_verified_at) values ('bcff588f-b12e-5a2d-a12e-8710933dbabf', 'scrypt$15$8$1$b3JuZWstdHV6LWFkYS0wMA$Rx1NG5wdaOOWyWj-KpDh9k5qxPs55oRMmNluS4YiMS8', now());
 insert into auth.users (id, email, raw_user_meta_data) values ('970ee8b6-2bb0-51ac-aa69-a2b6def5d160', 'bora@ornek.test', '{"full_name": "Bora Şahin"}'::jsonb);
+-- Örnek kullanıcının deneme şifresi: "deneme-sifresi" (yalnız yerel geliştirme verisi).
+insert into user_credentials (user_id, password_hash, email_verified_at) values ('970ee8b6-2bb0-51ac-aa69-a2b6def5d160', 'scrypt$15$8$1$b3JuZWstdHV6LWJvcmEtMA$pYJ-bOuChHsDSRmoX2iWnB1iPBpr6MIFhAKSZDi8v94', now());
 update profiles set lang = 'tr', timezone = 'Europe/Istanbul';
 insert into workspaces (id, name, slug, language, country, currency, timezone, created_by) values ('428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'Örnek Atölye', 'demo', 'tr', 'TR', 'TRY', 'Europe/Istanbul', 'bcff588f-b12e-5a2d-a12e-8710933dbabf');
 insert into workspace_members (workspace_id, user_id, is_admin, rights) values ('428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'bcff588f-b12e-5a2d-a12e-8710933dbabf', true, '{}'::jsonb);
@@ -41,6 +45,7 @@ insert into custom_fields (id, workspace_id, entity_type, name, type, sort) valu
 
 insert into channels (id, workspace_id, kind, name, external_account_id, status, pipeline_id, connected_at) values ('bd52b7b3-7f51-5779-8071-ab13fbc7e7d3', '428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'telegram', 'Telegram botu', 'demo-telegram', 'connected', '69bcc448-faa2-5ceb-94df-8401ee52824c', now() - interval '20 days');
 insert into channels (id, workspace_id, kind, name, external_account_id, status, pipeline_id, connected_at) values ('543de121-2c5b-54b5-979f-c0b0326cff08', '428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'whatsapp', 'WhatsApp hattı', 'demo-whatsapp', 'connected', '69bcc448-faa2-5ceb-94df-8401ee52824c', now() - interval '20 days');
+update channels set is_demo = true where external_account_id like 'demo-%';
 
 insert into companies (id, workspace_id, name, responsible_user_id, custom, created_at, updated_at) values ('16dfe4d1-f620-5bdc-b987-acb3a44ebd01', '428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'Aksoy Mimarlık', 'bcff588f-b12e-5a2d-a12e-8710933dbabf', '{}'::jsonb, now() + interval '-1036800 seconds', now() + interval '-172800 seconds');
 insert into companies (id, workspace_id, name, responsible_user_id, custom, created_at, updated_at) values ('202312c8-f7d0-5bf7-a6d4-ed5cc3dcc168', '428e13fd-3995-52de-b1bc-7a0c6b117dcc', 'Kuzey Mobilya', 'bcff588f-b12e-5a2d-a12e-8710933dbabf', '{"22719fe5-2647-5b85-b4ce-d45762e37b3e": "https://kuzeymobilya.test"}'::jsonb, now() + interval '-1728000 seconds', now() + interval '-86400 seconds');
@@ -111,10 +116,14 @@ alter table leads enable trigger set_updated_at;
 
 -- Kısıtlı üye: yalnız kendi sorumlu olduğu ve atanmamış kayıtları görür (görüntüleme kapsamı "own").
 insert into auth.users (id, email, raw_user_meta_data) values ('0106f45a-8ed4-5a14-9dee-cbcfb408bc65', 'cem@ornek.test', '{"full_name": "Cem Kara"}'::jsonb);
+-- Örnek kullanıcının deneme şifresi: "deneme-sifresi" (yalnız yerel geliştirme verisi).
+insert into user_credentials (user_id, password_hash, email_verified_at) values ('0106f45a-8ed4-5a14-9dee-cbcfb408bc65', 'scrypt$15$8$1$b3JuZWstdHV6LWNlbS0wMA$Ihhq9CYLYCFpYHGVA1zNP9rbzOs6ceI0b70evsI1Qp0', now());
 insert into workspace_members (workspace_id, user_id, is_admin, rights) values ('428e13fd-3995-52de-b1bc-7a0c6b117dcc', '0106f45a-8ed4-5a14-9dee-cbcfb408bc65', false, '{"leads": {"view": "own", "edit": "own", "add": true, "delete": "none", "export": "none"}, "contacts": {"view": "own", "edit": "own", "add": true, "delete": "none", "export": "none"}, "companies": {"view": "own", "edit": "own", "add": true, "delete": "none", "export": "none"}, "tasks": {"view": "own", "edit": "own", "delete": "none"}, "inbox": {"view": "own"}}'::jsonb);
 
 -- İkinci kiracı: kiracı duvarını sınamak için. "Örnek Atölye" üyeleri bunun varlığını bile görmemeli.
 insert into auth.users (id, email, raw_user_meta_data) values ('aa9dbb61-4db1-537c-bfdf-a60db7e4b676', 'can@diger.test', '{"full_name": "Can Öz"}'::jsonb);
+-- Örnek kullanıcının deneme şifresi: "deneme-sifresi" (yalnız yerel geliştirme verisi).
+insert into user_credentials (user_id, password_hash, email_verified_at) values ('aa9dbb61-4db1-537c-bfdf-a60db7e4b676', 'scrypt$15$8$1$b3JuZWstdHV6LWNhbi0wMA$XXvhYI31c1Gl4zt7wxDWBR5VZfpuCs4XODBj7dZxz84', now());
 insert into workspaces (id, name, slug, language, country, currency, timezone, created_by) values ('e0842142-3c94-564b-8637-876577678f4c', 'Diğer Atölye', 'diger', 'tr', 'TR', 'TRY', 'Europe/Istanbul', 'aa9dbb61-4db1-537c-bfdf-a60db7e4b676');
 insert into workspace_members (workspace_id, user_id, is_admin) values ('e0842142-3c94-564b-8637-876577678f4c', 'aa9dbb61-4db1-537c-bfdf-a60db7e4b676', true);
 insert into subscriptions (workspace_id, trial_ends_at) values ('e0842142-3c94-564b-8637-876577678f4c', now() + interval '14 days');

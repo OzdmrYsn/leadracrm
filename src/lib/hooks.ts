@@ -12,6 +12,7 @@ import {
   type UseQueryResult,
 } from "@tanstack/react-query";
 import type { StageColor } from "@/components/ui/tag";
+import type { Billing, BillingPeriod } from "./billing";
 import { api, ApiError } from "./api";
 import { createSerial } from "./serial";
 import type {
@@ -20,6 +21,8 @@ import type {
   Board,
   BulkAction,
   BulkResult,
+  Channel,
+  ChannelKind,
   Company,
   CompanyDetail,
   CompanySummary,
@@ -33,11 +36,13 @@ import type {
   CustomField,
   CustomFieldType,
   CustomValues,
+  DateFormat,
   EntityType,
   FeedItem,
   Group,
   LossReason,
   Id,
+  Invitation,
   Insights,
   GoogleStatus,
   Intake,
@@ -62,6 +67,8 @@ import type {
   Tag,
   Task,
   TaskFilter,
+  TaskType,
+  TimeFormat,
   UpdateLeadInput,
   Workspace,
 } from "./types";
@@ -453,6 +460,20 @@ export function useDeleteLossReason(ws: string) {
   return useAdminMutation(ws, (id: Id) => api.delete(`${base(ws)}/loss-reasons/${id}`));
 }
 
+/* ---------- özel görev türleri ---------- */
+
+export function useCreateTaskType(ws: string) {
+  return useAdminMutation(ws, (name: string) => api.post<TaskType>(`${base(ws)}/task-types`, { name }));
+}
+
+export function useUpdateTaskType(ws: string) {
+  return useAdminMutation(ws, ({ id, name }: { id: Id; name: string }) => api.patch<TaskType>(`${base(ws)}/task-types/${id}`, { name }));
+}
+
+export function useDeleteTaskType(ws: string) {
+  return useAdminMutation(ws, (id: Id) => api.delete(`${base(ws)}/task-types/${id}`));
+}
+
 export function useSavedFilters(ws: string) {
   return useQuery({ queryKey: ["w", ws, "savedFilters"], queryFn: () => api.get<SavedFilter[]>(`${base(ws)}/saved-filters`), staleTime: 30_000 });
 }
@@ -697,6 +718,10 @@ export function useReorderStages(ws: string, pipelineId: Id) {
   return useAdminMutation(ws, (stageIds: Id[]) => api.put<Pipeline>(`${base(ws)}/pipelines/${pipelineId}/stages/order`, { stageIds }));
 }
 
+export function useReorderPipelines(ws: string) {
+  return useAdminMutation(ws, (pipelineIds: Id[]) => api.put<Pipeline[]>(`${base(ws)}/pipelines/order`, { pipelineIds }));
+}
+
 export function useDeleteStage(ws: string) {
   return useAdminMutation(ws, ({ stageId, moveTo }: { stageId: Id; moveTo?: Id }) =>
     api.delete(`${base(ws)}/stages/${stageId}${moveTo ? `?moveTo=${encodeURIComponent(moveTo)}` : ""}`),
@@ -743,7 +768,7 @@ export function useDeleteGroup(ws: string) {
 }
 
 export function useUpdateWorkspace(ws: string) {
-  return useAdminMutation(ws, (input: { name?: string; currency?: string; timezone?: string }) => api.patch<Workspace>(`${base(ws)}/workspace`, input));
+  return useAdminMutation(ws, (input: { name?: string; currency?: string; timezone?: string; timeFormat?: TimeFormat; dateFormat?: DateFormat }) => api.patch<Workspace>(`${base(ws)}/workspace`, input));
 }
 
 export function useUpdateProfile(ws: string) {
@@ -789,6 +814,78 @@ export function useMarkRead(ws: string) {
   });
 }
 
+/** Gönderilemeyen mesajı yeniden dener. */
+export function useRetryMessage(ws: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ conversationId, messageId }: { conversationId: Id; messageId: Id }) =>
+      api.post<Message>(`${base(ws)}/conversations/${conversationId}/messages/${messageId}/retry`),
+    onSettled: () => client.invalidateQueries({ queryKey: keys.all(ws) }),
+  });
+}
+
+/* ---------- hesap ve davetler ---------- */
+
+export function useResendVerification() {
+  return useMutation({ mutationFn: () => api.post<{ sent: boolean }>("/api/auth/verify/resend") });
+}
+
+export function useInvitations(ws: string) {
+  return useQuery({ queryKey: ["w", ws, "invitations"], queryFn: () => api.get<{ items: Invitation[]; sandbox: boolean }>(`${base(ws)}/invitations`) });
+}
+
+export function useCreateInvitation(ws: string) {
+  return useAdminMutation(ws, (input: { email: string; name: string; isAdmin: boolean; groupId: Id | null }) => api.post<Invitation>(`${base(ws)}/invitations`, input));
+}
+
+export function useResendInvitation(ws: string) {
+  return useAdminMutation(ws, (id: Id) => api.post<void>(`${base(ws)}/invitations/${id}/resend`));
+}
+
+export function useRevokeInvitation(ws: string) {
+  return useAdminMutation(ws, (id: Id) => api.delete(`${base(ws)}/invitations/${id}`));
+}
+
+/* ---------- abonelik ---------- */
+
+/** Faturalandırma ekranı yalnız yöneticiye açıktır; üye için istek atılmaz. */
+export function useBilling(ws: string, enabled = true) {
+  return useQuery({ queryKey: ["w", ws, "billing"], queryFn: () => api.get<Billing>(`${base(ws)}/billing`), enabled });
+}
+
+export function useStartCheckout(ws: string) {
+  return useMutation({ mutationFn: (input: { seats: number; period: BillingPeriod }) => api.post<{ url: string }>(`${base(ws)}/billing/checkout`, input) });
+}
+
+export function useChangeSeats(ws: string) {
+  return useAdminMutation(ws, (seats: number) => api.post<void>(`${base(ws)}/billing/seats`, { seats }));
+}
+
+export function useCancelSubscription(ws: string) {
+  return useAdminMutation(ws, () => api.post<void>(`${base(ws)}/billing/cancel`));
+}
+
+export function useResumeSubscription(ws: string) {
+  return useAdminMutation(ws, () => api.post<void>(`${base(ws)}/billing/resume`));
+}
+
+/* ---------- mesajlaşma kanalları ---------- */
+
+/** sandbox: kanal türü yerel taklitle çalışıyorsa true (yalnız geliştirme). */
+export type ChannelList = { items: Channel[]; sandbox: Partial<Record<ChannelKind, boolean>> };
+
+export function useChannels(ws: string) {
+  return useQuery({ queryKey: ["w", ws, "channels"], queryFn: () => api.get<ChannelList>(`${base(ws)}/channels`) });
+}
+
+export function useConnectChannel(ws: string) {
+  return useAdminMutation(ws, (input: { kind: ChannelKind; pipelineId?: Id } & Record<string, string | undefined>) => api.post<Channel>(`${base(ws)}/channels`, input));
+}
+
+export function useDisconnectChannel(ws: string) {
+  return useAdminMutation(ws, (id: Id) => api.delete(`${base(ws)}/channels/${id}`));
+}
+
 /**
  * Mesaj gönderir. Mesaj hemen "gönderiliyor" durumunda görünür; client_token sayesinde
  * yeniden deneme ya da çift tıklama ikinci bir mesaj üretmez.
@@ -808,6 +905,7 @@ export function useSendMessage(ws: string, conversationId: Id | null, senderName
         senderName,
         body,
         status: "queued",
+        errorCode: null,
         clientToken,
         createdAt: new Date().toISOString(),
       };

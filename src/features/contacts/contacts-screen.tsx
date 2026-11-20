@@ -179,13 +179,13 @@ export function ContactsScreen({ ws }: { ws: string }) {
               {rows.map((contact) => (
                 <tr key={contact.id} className="border-b transition-colors hover:bg-surface">
                   <th scope="row" className="max-w-xs px-3 py-2 font-medium">
-                    <Link href={`/w/${ws}/contacts/${contact.id}`} className="block truncate rounded-sm text-fg underline-offset-4 hover:underline">
+                    <Link href={`/w/${ws}/contacts/${contact.id}`} className="block truncate rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
                       {contact.name}
                     </Link>
                   </th>
                   <td className="max-w-56 px-3 py-2">
                     {contact.companyId && contact.company ? (
-                      <Link href={`/w/${ws}/companies/${contact.companyId}`} className="block truncate rounded-sm text-fg underline-offset-4 hover:underline">
+                      <Link href={`/w/${ws}/companies/${contact.companyId}`} className="block truncate rounded-sm text-accent underline-offset-2 hover:underline">
                         {contact.company}
                       </Link>
                     ) : (

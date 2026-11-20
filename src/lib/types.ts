@@ -1,5 +1,6 @@
 // Ekranların ve API'nin paylaştığı veri biçimleri.
 // Sahte veri katmanı da gerçek (Supabase) veri katmanı da bu biçimleri döndürür.
+import type { Subscription } from "./billing";
 import type { StageColor } from "@/components/ui/tag";
 
 export type Id = string;
@@ -7,9 +8,21 @@ export type StageKind = "incoming" | "open" | "won" | "lost";
 
 export type User = { id: Id; name: string; email: string; isAdmin: boolean; groupId: Id | null };
 
-export type Workspace = { slug: string; name: string; currency: string; locale: string; timezone: string };
+/** Saat biçimi: 24 saat ya da 12 saat (ÖÖ/ÖS). */
+export type TimeFormat = "12" | "24";
+/** Tarih biçimi. text: "21 Kas 2026"; dmy: "21.11.2026"; mdy: "11/21/2026"; ymd: "2026-11-21". */
+export type DateFormat = "text" | "dmy" | "mdy" | "ymd";
+
+/** locale, saat biçimini de taşır (BCP 47 "hc" uzantısı, ör. "tr-TR-u-hc-h12"); saatler ona göre yazılır. */
+export type Workspace = { slug: string; name: string; currency: string; locale: string; timezone: string; timeFormat: TimeFormat; dateFormat: DateFormat };
 
 export type TaskType = { id: Id; name: string; isSystem: boolean };
+
+/** Bekleyen davet. expired: bağlantının süresi dolmuş (yeniden gönderilebilir). */
+export type Invitation = { id: Id; email: string; name: string; isAdmin: boolean; groupId: Id | null; expiresAt: string; lastSentAt: string; expired: boolean; invitedBy: string | null };
+
+/** Davet sayfasında gösterilen bilgi. hasAccount: bu e-postanın zaten bir hesabı var. */
+export type InvitationPreview = { workspaceName: string; email: string; name: string; inviterName: string | null; hasAccount: boolean };
 
 export type LossReason = { id: Id; name: string };
 
@@ -18,6 +31,10 @@ export type Session = {
   /** Oturumdaki kullanıcının yetkileri. Ekran bunlarla yalnız neyi göstereceğine karar verir; kuralı sunucu uygular. */
   rights: Rights;
   workspace: Workspace;
+  /** Kullanıcının e-postası doğrulanmış mı. Doğrulanmamışsa uyarı çıkar ve davet gönderilemez. */
+  emailVerified: boolean;
+  /** Abonelik durumu: deneme ve salt okunur uyarıları, koltuk kullanımı. */
+  subscription: Subscription;
   users: User[];
   pipelines: Pipeline[];
   taskTypes: TaskType[];
@@ -178,7 +195,22 @@ export type BoardColumn = { stage: Stage; count: number; totalMinor: number; lea
 
 export type Board = { pipeline: Pipeline; currency: string; columns: BoardColumn[] };
 
-export type ChannelKind = "telegram" | "whatsapp";
+export type ChannelKind = "telegram" | "whatsapp" | "instagram" | "facebook" | "tiktok" | "livechat" | "sms" | "viber";
+
+/** Bağlı bir mesajlaşma kanalı. Anahtarı istemciye hiç dönmez. */
+export type Channel = {
+  id: Id;
+  kind: ChannelKind;
+  /** Hizmetteki hesabın görünen adı, örn. "@ornek_bot". */
+  name: string;
+  status: "pending" | "connected" | "error" | "disconnected";
+  pipelineId: Id | null;
+  /** Kanal koptuysa neden (örn. "unauthorized"). */
+  lastError: string | null;
+  /** Kanaldan gelen son bildirimin zamanı. */
+  lastEventAt: string | null;
+  connectedAt: string | null;
+};
 
 export type Conversation = {
   id: Id;
@@ -205,6 +237,8 @@ export type Message = {
   senderName: string | null;
   body: string;
   status: MessageStatus;
+  /** Gönderim başarısızsa neden (örn. "recipient_blocked"). Arayüz okunur metne çevirir. */
+  errorCode: string | null;
   clientToken: string | null;
   createdAt: string;
 };

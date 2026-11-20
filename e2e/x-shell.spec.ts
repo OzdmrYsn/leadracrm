@@ -19,7 +19,7 @@ const screens: Array<{ id: string; path: string; ready: (page: Page) => ReturnTy
   { id: "S36 raporlar", path: "insights", ready: (page) => page.getByRole("region", { name: t.insights.summary }) },
   { id: "S39 çalışma alanı ayarları", path: "settings/workspace", ready: (page) => page.getByLabel(t.workspaceSettings.name) },
   { id: "S40 kullanıcılar", path: "settings/users", ready: (page) => page.getByRole("heading", { name: t.team.title }) },
-  { id: "taslak ekran", path: "settings/billing", ready: (page) => page.getByRole("heading", { level: 1 }) },
+  { id: "faturalandırma", path: "settings/billing", ready: (page) => page.getByRole("button", { name: t.billing.goToPayment }) },
 ];
 
 async function open(page: Page, screen: (typeof screens)[number]) {

@@ -105,7 +105,7 @@ test.describe("F18 dış kaynaktan lead al (Google Sheets ve genel adres)", () =
   test("F18-E10 sıradaki kanallar bağlanamaz: durumları ve gereken şey yazılıdır", async ({ page }) => {
     await gotoSources(page);
     const channels = page.getByRole("region", { name: s.channelsTitle });
-    for (const key of ["whatsapp", "instagram", "telegram"] as const) {
+    for (const key of ["whatsapp", "instagram", "viber"] as const) {
       const item = channels.getByRole("listitem").filter({ hasText: s.items[key].name });
       await expect(item.getByText(s.planned)).toBeVisible();
       await expect(item.getByText(s.items[key].need)).toBeVisible();

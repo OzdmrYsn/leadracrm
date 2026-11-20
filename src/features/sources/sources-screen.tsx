@@ -14,9 +14,10 @@ import { Switch } from "@/components/ui/toggle";
 import { fill, useI18n } from "@/i18n";
 import { errorText } from "@/lib/errors";
 import { formatAgo } from "@/lib/format";
-import { useDeleteIntake, useGoogle, useIntakes, useInspectSheet, useNow, useRotateIntake, useSession, useSheetLinks, useSyncSheetLink, useTags, useUpdateIntake } from "@/lib/hooks";
-import type { Intake } from "@/lib/types";
+import { useChannels, useDeleteIntake, useGoogle, useIntakes, useInspectSheet, useNow, useRotateIntake, useSession, useSheetLinks, useSyncSheetLink, useTags, useUpdateIntake } from "@/lib/hooks";
+import type { Channel, ChannelKind, Intake } from "@/lib/types";
 import { PLANNED_SOURCES, READY_SOURCES, sourceOf, type SourceDef } from "./catalog";
+import { ChannelConnectDialog, ChannelDisconnectDialog, ChannelRows } from "./channels-section";
 import { ConnectForm, SecretPanel, type Secret } from "./connect-dialog";
 import { SourceGlyph } from "./source-glyph";
 import { pickSpreadsheet, SheetConnect, type SheetDraft } from "./sheet-connect";
@@ -70,6 +71,11 @@ export function SourcesScreen({ ws }: { ws: string }) {
   const session = useSession(ws);
   const tags = useTags(ws);
   const intakes = useIntakes(ws);
+  const channels = useChannels(ws);
+  // Açık kanal bağlama penceresi (null: kapalı).
+  const [channelKind, setChannelKind] = useState<ChannelKind | null>(null);
+  // Bağlantısı kesilmek üzere olan kanal (null: onay penceresi kapalı).
+  const [leaving, setLeaving] = useState<Channel | null>(null);
   const update = useUpdateIntake(ws);
   const rotate = useRotateIntake(ws);
   const remove = useDeleteIntake(ws);
@@ -128,6 +134,7 @@ export function SourcesScreen({ ws }: { ws: string }) {
   const allStages = pipelines.flatMap((item) => item.stages);
   const leadTags = tags.data ?? [];
   const connected = intakes.data ?? [];
+  const channelItems = channels.data?.items ?? [];
 
   const show = (next: Open, element?: HTMLElement) => {
     if (element) trigger.current = element;
@@ -200,10 +207,21 @@ export function SourcesScreen({ ws }: { ws: string }) {
             </h2>
             {intakes.isPending ? (
               <Skeleton className="h-16 w-full" />
-            ) : connected.length === 0 ? (
+            ) : connected.length === 0 && channelItems.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border-input bg-bg px-4 py-5 text-sm text-muted">{t.intakes.none}</p>
             ) : (
               <ul className="flex flex-col divide-y rounded-lg border bg-bg shadow-card">
+                <ChannelRows
+                  channels={channelItems}
+                  canEdit={canEdit}
+                  now={now}
+                  onDisconnect={(channel, element) => {
+                    trigger.current = element;
+                    setProblem(null);
+                    setFlash(null);
+                    setLeaving(channel);
+                  }}
+                />
                 {connected.map((intake) => {
                   const stage = allStages.find((item) => item.id === intake.stageId);
                   const tag = leadTags.find((item) => item.id === intake.tagId);
@@ -308,7 +326,13 @@ export function SourcesScreen({ ws }: { ws: string }) {
                       className="w-full"
                       icon={<Plus aria-hidden />}
                       aria-label={fill(t.sources.connectLabel, { name })}
-                      onClick={(event) => show({ type: "connect", source, method: null }, event.currentTarget)}
+                      onClick={(event) => {
+                        if (source.action.type !== "channel") return show({ type: "connect", source, method: null }, event.currentTarget);
+                        trigger.current = event.currentTarget;
+                        setProblem(null);
+                        setFlash(null);
+                        setChannelKind(source.action.kind);
+                      }}
                     >
                       {t.sources.connect}
                     </Button>
@@ -347,6 +371,15 @@ export function SourcesScreen({ ws }: { ws: string }) {
         </div>
       </div>
 
+      <ChannelConnectDialog
+        ws={ws}
+        kind={channelKind}
+        sandbox={channelKind ? (channels.data?.sandbox[channelKind] ?? false) : false}
+        pipelines={pipelines}
+        onClose={() => setChannelKind(null)}
+        returnFocusTo={trigger}
+      />
+      <ChannelDisconnectDialog ws={ws} target={leaving} onClose={() => setLeaving(null)} onDone={setFlash} returnFocusTo={trigger} />
       <Dialog
         title={title}
         description={description}

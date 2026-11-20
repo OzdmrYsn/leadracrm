@@ -250,7 +250,7 @@ export function LeadScreen({ ws, leadId }: { ws: string; leadId: Id }) {
                 <div className="flex flex-col gap-2">
                   <div className="text-sm text-fg">
                     <p className="font-medium">
-                      <Link href={`/w/${ws}/contacts/${contact.id}`} className="rounded-sm underline underline-offset-4">
+                      <Link href={`/w/${ws}/contacts/${contact.id}`} className="rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
                         {contact.name}
                       </Link>
                     </p>
@@ -343,7 +343,7 @@ export function LeadScreen({ ws, leadId }: { ws: string; leadId: Id }) {
           <div className="px-2 py-1">
             <h2 className="text-xs text-muted">{t.lead.created}</h2>
             <p className="text-sm text-fg">
-              <time dateTime={lead.createdAt}>{formatDateTime(lead.createdAt, workspace.locale, workspace.timezone)}</time>
+              <time dateTime={lead.createdAt}>{formatDateTime(lead.createdAt, workspace.locale, workspace.timezone, workspace.dateFormat)}</time>
             </p>
           </div>
         </section>
@@ -356,7 +356,7 @@ export function LeadScreen({ ws, leadId }: { ws: string; leadId: Id }) {
                 <Skeleton className="ml-auto h-12 w-1/2" />
               </div>
             ) : feed.data && feed.data.length > 0 ? (
-              <Feed items={feed.data} now={now} locale={workspace.locale} timeZone={workspace.timezone} label={t.lead.feed} />
+              <Feed ws={ws} items={feed.data} now={now} locale={workspace.locale} timeZone={workspace.timezone} dateFormat={workspace.dateFormat} label={t.lead.feed} />
             ) : (
               <EmptyState icon={<MessageSquare />} title={t.lead.emptyFeedTitle} body={t.lead.emptyFeedBody} />
             )}

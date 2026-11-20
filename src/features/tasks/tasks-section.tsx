@@ -44,7 +44,7 @@ export function TasksSection({
           {t.tasks.add}
         </Button>
       </div>
-      <TaskList ws={ws} filter={filter} now={now} locale={session.workspace.locale} timeZone={session.workspace.timezone} emptyText={t.tasks.none} />
+      <TaskList ws={ws} filter={filter} now={now} locale={session.workspace.locale} timeZone={session.workspace.timezone} dateFormat={session.workspace.dateFormat} emptyText={t.tasks.none} />
       <TaskDialog ws={ws} session={session} target={target} open={adding} onOpenChange={setAdding} returnFocusTo={addRef} />
     </section>
   );

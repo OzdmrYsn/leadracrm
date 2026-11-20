@@ -2,6 +2,7 @@
 
 import { useState, type DragEvent } from "react";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/components/ui/cn";
 import { fill } from "@/i18n/fill";
@@ -61,8 +62,8 @@ export function PlayBoard() {
     <div className="flex flex-col gap-4">
       <Confetti burst={burst} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="flex items-center gap-2 text-sm font-medium text-on-ink">
-          <span aria-hidden className="rounded-md bg-highlight px-2 py-0.5 text-xs font-bold text-on-highlight">
+        <p className="flex items-center gap-2 text-sm font-medium text-fg">
+          <span aria-hidden className="rounded-sm bg-highlight px-2 py-0.5 text-xs font-bold text-on-highlight">
             {t.badge}
           </span>
           {t.hint}
@@ -71,7 +72,7 @@ export function PlayBoard() {
           type="button"
           onClick={reset}
           disabled={!changed}
-          className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium text-on-ink-muted transition-colors hover:bg-ink hover:text-on-ink disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium text-muted transition-colors hover:bg-surface-strong hover:text-fg disabled:opacity-40"
         >
           <RotateCcw aria-hidden className="size-4" />
           {t.reset}
@@ -95,58 +96,61 @@ export function PlayBoard() {
                 }}
                 onDragLeave={() => setOver((current) => (current === stage ? null : current))}
                 onDrop={(event) => drop(event, stage)}
-                className={cn("flex min-w-0 flex-col gap-2.5 rounded-xl p-1.5 transition-colors", over === stage && "bg-ink ring-2 ring-highlight")}
+                className={cn("flex min-w-0 flex-col gap-2 rounded-md p-1.5 transition-colors", over === stage && "bg-accent-soft ring-2 ring-accent")}
               >
-                <div data-surface="light" className="flex flex-col gap-2 rounded-xl px-3.5 py-3 text-ink shadow-block" style={{ background: `var(--stage-bright-${color})` }}>
-                  <div className="flex items-center justify-between gap-2">
-                    <input
-                      value={names[stage]}
-                      onChange={(event) => setNames(names.map((name, index) => (index === stage ? event.target.value : name)))}
-                      maxLength={24}
-                      aria-label={fill(t.stageName, { n: stage + 1 })}
-                      className="w-full min-w-0 rounded-sm bg-transparent text-sm font-bold text-ink underline decoration-dashed decoration-1 underline-offset-4 outline-offset-4"
-                    />
-                    <span className="shrink-0 rounded-pill bg-ink px-2 py-0.5 text-xs text-on-ink">{fill(tr.board.leadCount, { count: list.length })}</span>
-                  </div>
-                  <p className="font-display text-lg text-ink tabular-nums">{money.format(total)}</p>
+                <div className="flex flex-col items-center gap-1 border-b-2 px-2 pb-2.5" style={{ borderColor: `var(--stage-strong-${color})` }}>
+                  <input
+                    value={names[stage]}
+                    onChange={(event) => setNames(names.map((name, index) => (index === stage ? event.target.value : name)))}
+                    maxLength={24}
+                    aria-label={fill(t.stageName, { n: stage + 1 })}
+                    className="w-full min-w-0 rounded-sm bg-transparent text-center text-sm font-bold tracking-wide text-fg uppercase underline decoration-border-input decoration-dashed decoration-1 underline-offset-4 outline-offset-4"
+                  />
+                  <p className="flex items-baseline gap-1.5 text-xs text-muted tabular-nums">
+                    <span>{fill(tr.board.leadCount, { count: list.length })}</span>
+                    <span aria-hidden>·</span>
+                    <span className="font-semibold text-fg">{money.format(total)}</span>
+                  </p>
                 </div>
                 {list.map((card) => (
                   <article
                     key={card.id}
-                    data-surface="light"
                     draggable
                     onDragStart={(event) => {
                       event.dataTransfer.setData("text/plain", String(card.id));
                       event.dataTransfer.effectAllowed = "move";
                     }}
-                    className="motion-block flex cursor-grab flex-col gap-2 rounded-xl bg-bg p-3.5 text-fg shadow-card active:cursor-grabbing"
+                    className="motion-block flex cursor-grab gap-2.5 rounded-md border bg-bg p-3 text-fg transition-[box-shadow,border-color] hover:border-border-input hover:shadow-card active:cursor-grabbing"
                   >
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-semibold text-fg">{card.name}</h3>
-                      <p className="truncate text-xs text-muted">{card.who}</p>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-display text-base font-bold text-fg tabular-nums">{money.format(card.price)}</span>
-                      {stage < LAST ? (
-                        <button
-                          type="button"
-                          onClick={() => move(card.id, stage + 1)}
-                          aria-label={fill(t.advanceLabel, { name: card.name })}
-                          className="inline-flex h-8 items-center gap-1 rounded-md bg-ink px-2.5 text-xs font-semibold text-on-ink transition-colors hover:bg-ink-raised"
-                        >
-                          {t.advance}
-                          <ArrowRight aria-hidden className="size-3.5" />
-                        </button>
-                      ) : (
-                        <span className="inline-flex h-8 items-center gap-1 rounded-md bg-success-soft px-2.5 text-xs font-semibold text-success">
-                          <Check aria-hidden className="size-3.5" />
-                          {t.won}
-                        </span>
-                      )}
+                    <Avatar name={card.who} locale="tr-TR" decorative />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs text-muted">{card.who}</p>
+                        <h3 className="truncate text-sm font-semibold text-accent">{card.name}</h3>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-fg tabular-nums">{money.format(card.price)}</span>
+                        {stage < LAST ? (
+                          <button
+                            type="button"
+                            onClick={() => move(card.id, stage + 1)}
+                            aria-label={fill(t.advanceLabel, { name: card.name })}
+                            className="inline-flex h-8 items-center gap-1 rounded-md bg-accent px-2.5 text-xs font-semibold text-on-accent transition-colors hover:bg-accent-hover"
+                          >
+                            {t.advance}
+                            <ArrowRight aria-hidden className="size-3.5" />
+                          </button>
+                        ) : (
+                          <span className="inline-flex h-8 items-center gap-1 rounded-md bg-success-soft px-2.5 text-xs font-semibold text-success">
+                            <Check aria-hidden className="size-3.5" />
+                            {t.won}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </article>
                 ))}
-                {list.length === 0 ? <p className="rounded-xl border border-dashed border-on-ink-muted px-3 py-5 text-center text-xs text-on-ink-muted">{t.empty}</p> : null}
+                {list.length === 0 ? <p className="rounded-md border border-dashed border-border-input px-3 py-5 text-center text-xs text-muted">{t.empty}</p> : null}
               </li>
             );
           })}

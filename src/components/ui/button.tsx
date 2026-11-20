@@ -76,7 +76,7 @@ export function ToggleButton({ pressed, className, type = "button", ...props }: 
       aria-pressed={pressed}
       className={cn(
         "h-8 shrink-0 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors",
-        pressed ? "bg-ink text-on-ink" : "text-muted hover:bg-surface-strong hover:text-fg",
+        pressed ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-surface-strong hover:text-fg",
         className,
       )}
       {...props}

@@ -1,7 +1,7 @@
 // Ekip: üyeler, gruplar, yetkiler; çalışma alanı ve profil ayarları; genel arama.
-import type { Group, Id, Member, Rights, SearchResults, Workspace } from "@/lib/types";
+import type { DateFormat, Group, Id, Member, Rights, SearchResults, TimeFormat, Workspace } from "@/lib/types";
 import { DataError, isUuid, notFound } from "../errors";
-import { inWorkspace, requireAdmin, type Ctx } from "./ctx";
+import { inWorkspace, requireAdmin, workspaceOf, type Ctx } from "./ctx";
 import { normalizeRights } from "./rights";
 import { companySummaries, contactSummaries, leadFilter, leadSummaries } from "./shared";
 
@@ -41,6 +41,8 @@ export function updateMember(ws: string, userId: Id, input: { isAdmin?: boolean;
       select is_admin, is_active, group_id, rights from workspace_members where workspace_id = ${ctx.ws.id} and user_id = ${userId} for update`;
     if (!member) throw notFound("member");
     if (userId === ctx.user.id && (input.isAdmin === false || input.isActive === false)) throw new DataError(422, "self_change");
+    // Pasif üyeyi etkinleştirmek bir koltuk kullanır.
+    if (input.isActive === true && !member.isActive) await requireFreeSeat(ctx);
     if (input.groupId) {
       if (!isUuid(input.groupId)) throw notFound("group");
       const [group] = await sql`select 1 from groups where id = ${input.groupId} and workspace_id = ${ctx.ws.id}`;
@@ -56,6 +58,13 @@ export function updateMember(ws: string, userId: Id, input: { isAdmin?: boolean;
       where workspace_id = ${ctx.ws.id} and user_id = ${userId}`;
     return (await members(ctx)).find((item) => item.id === userId)!;
   });
+}
+
+/** Etkin üye sayısı koltuk sayısına ulaştıysa yeni üye etkinleşemez. */
+export async function requireFreeSeat(ctx: Ctx): Promise<void> {
+  const [{ used }] = await ctx.sql<Array<{ used: number }>>`
+    select count(*)::int as used from workspace_members where workspace_id = ${ctx.ws.id} and is_active`;
+  if (used >= ctx.subscription.seats) throw new DataError(409, "seat_limit", `all ${ctx.subscription.seats} seats are in use`);
 }
 
 /* ---------- gruplar ---------- */
@@ -104,7 +113,10 @@ export function deleteGroup(ws: string, groupId: Id): Promise<void> {
 
 /* ---------- çalışma alanı ve profil ---------- */
 
-export function updateWorkspace(ws: string, input: { name?: string; currency?: string; timezone?: string }): Promise<Workspace> {
+export function updateWorkspace(
+  ws: string,
+  input: { name?: string; currency?: string; timezone?: string; timeFormat?: TimeFormat; dateFormat?: DateFormat },
+): Promise<Workspace> {
   return inWorkspace(ws, async (ctx) => {
     requireAdmin(ctx);
     if (input.timezone !== undefined) {
@@ -114,17 +126,19 @@ export function updateWorkspace(ws: string, input: { name?: string; currency?: s
         throw new DataError(422, "validation", "unknown time zone");
       }
     }
-    const [row] = await ctx.sql<Array<{ name: string; currency: string; timezone: string }>>`
+    const [row] = await ctx.sql<Array<{ name: string; currency: string; timezone: string; timeFormat: TimeFormat; dateFormat: DateFormat }>>`
       update workspaces set
         name = ${input.name !== undefined ? input.name.trim() : ctx.ws.name},
         currency = ${input.currency ?? ctx.ws.currency},
-        timezone = ${input.timezone ?? ctx.ws.timezone}
+        timezone = ${input.timezone ?? ctx.ws.timezone},
+        time_format = ${input.timeFormat ?? ctx.ws.timeFormat},
+        date_format = ${input.dateFormat ?? ctx.ws.dateFormat}
       where id = ${ctx.ws.id}
-      returning name, currency, timezone`;
+      returning name, currency, timezone, time_format, date_format`;
     // Tek para birimi: çalışma alanınınki. Lead'lerdeki kopya onunla birlikte değişir; tutarlar çevrilmez.
     // Silinmiş lead'ler de dahil: geri alınırsa eski para birimiyle dönmesin.
     if (row.currency !== ctx.ws.currency) await ctx.sql`update leads set currency = ${row.currency} where workspace_id = ${ctx.ws.id}`;
-    return { slug: ctx.ws.slug, locale: ctx.ws.locale, ...row };
+    return workspaceOf({ ...ctx.ws, ...row });
   });
 }
 

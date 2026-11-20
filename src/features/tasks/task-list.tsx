@@ -13,7 +13,7 @@ import { fill, useI18n } from "@/i18n";
 import { errorText } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import { useCompleteTask, useTasks } from "@/lib/hooks";
-import type { Task, TaskFilter } from "@/lib/types";
+import type { DateFormat, Task, TaskFilter } from "@/lib/types";
 
 export function taskHref(ws: string, task: Task): string {
   const section = task.target.kind === "lead" ? "leads" : task.target.kind === "contact" ? "contacts" : "companies";
@@ -27,6 +27,7 @@ export function TaskRow({
   now,
   locale,
   timeZone,
+  dateFormat = "text",
   showTarget = false,
   onProblem,
 }: {
@@ -35,6 +36,7 @@ export function TaskRow({
   now: number;
   locale: string;
   timeZone: string;
+  dateFormat?: DateFormat;
   /** Görevin bağlı olduğu kaydı bağlantı olarak gösterir (takvim için). */
   showTarget?: boolean;
   /** Tamamlama başarısız olursa hata metni. Satır listeden kalkacaksa (ör. başka sekmede tamamlanmış) hatayı liste gösterir. */
@@ -76,12 +78,12 @@ export function TaskRow({
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
             {task.text ? <Badge>{task.typeName}</Badge> : null}
             <time dateTime={task.dueAt} className={overdue ? "font-medium text-danger" : undefined}>
-              {formatDateTime(task.dueAt, locale, timeZone)}
+              {formatDateTime(task.dueAt, locale, timeZone, dateFormat)}
             </time>
             {overdue ? <span className="font-medium text-danger">{t.tasks.overdue}</span> : null}
             {done ? <span>{t.tasks.done}</span> : null}
             {showTarget ? (
-              <Link href={taskHref(ws, task)} className="max-w-full truncate rounded-sm text-fg underline underline-offset-2">
+              <Link href={taskHref(ws, task)} className="max-w-full truncate rounded-sm font-medium text-accent underline-offset-2 hover:underline">
                 {task.target.name}
               </Link>
             ) : null}
@@ -142,6 +144,7 @@ export function TaskList({
   now,
   locale,
   timeZone,
+  dateFormat = "text",
   emptyText,
   showTarget = false,
 }: {
@@ -150,6 +153,7 @@ export function TaskList({
   now: number;
   locale: string;
   timeZone: string;
+  dateFormat?: DateFormat;
   emptyText: string;
   showTarget?: boolean;
 }) {
@@ -182,7 +186,7 @@ export function TaskList({
       {alert}
       <ul className="flex flex-col gap-2">
         {list.map((task) => (
-          <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} showTarget={showTarget} onProblem={setProblem} />
+          <TaskRow key={task.id} ws={ws} task={task} now={now} locale={locale} timeZone={timeZone} dateFormat={dateFormat} showTarget={showTarget} onProblem={setProblem} />
         ))}
       </ul>
     </>

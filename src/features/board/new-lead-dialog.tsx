@@ -18,7 +18,7 @@ import type { Id, Session } from "@/lib/types";
 
 const UNASSIGNED = "none";
 
-function NewLeadForm({ ws, session, pipelineId, onDone }: { ws: string; session: Session; pipelineId?: Id; onDone: () => void }) {
+function NewLeadForm({ ws, session, pipelineId, stageId: initialStageId, onDone }: { ws: string; session: Session; pipelineId?: Id; stageId?: Id; onDone: () => void }) {
   const { t } = useI18n();
   const create = useCreateLead(ws);
   const tags = useTags(ws);
@@ -28,7 +28,7 @@ function NewLeadForm({ ws, session, pipelineId, onDone }: { ws: string; session:
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [stageId, setStageId] = useState(stages[0]?.id ?? "");
+  const [stageId, setStageId] = useState(stages.find((stage) => stage.id === initialStageId)?.id ?? stages[0]?.id ?? "");
   const [responsible, setResponsible] = useState(session.user.id);
   const [contact, setContact] = useState<{ id: Id; name: string } | null>(null);
   const [tagIds, setTagIds] = useState<Id[]>([]);
@@ -177,6 +177,7 @@ export function NewLeadDialog({
   ws,
   session,
   pipelineId,
+  stageId,
   open,
   onOpenChange,
   returnFocusTo,
@@ -185,6 +186,8 @@ export function NewLeadDialog({
   session: Session;
   /** Verilmezse ana pipeline kullanılır. */
   pipelineId?: Id;
+  /** Pencere açılırken seçili gelecek aşama (sütundan hızlı ekleme). Verilmezse ilk açık aşama. */
+  stageId?: Id;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Pencereyi açan düğme; kapanınca odak buraya döner. */
@@ -200,7 +203,7 @@ export function NewLeadDialog({
       onOpenChange={onOpenChange}
       returnFocusTo={returnFocusTo}
     >
-      <NewLeadForm ws={ws} session={session} pipelineId={pipelineId} onDone={() => onOpenChange(false)} />
+      <NewLeadForm ws={ws} session={session} pipelineId={pipelineId} stageId={stageId} onDone={() => onOpenChange(false)} />
     </Dialog>
   );
 }

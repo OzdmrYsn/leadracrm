@@ -27,7 +27,7 @@ export function CompanyBlock({
       <h2 className="text-xs text-muted">{t.company.label}</h2>
       {company ? (
         <div className="flex flex-col items-start gap-2">
-          <Link href={`/w/${ws}/companies/${company.id}`} className="max-w-full rounded-sm text-sm font-medium break-words text-fg underline underline-offset-4">
+          <Link href={`/w/${ws}/companies/${company.id}`} className="max-w-full rounded-sm text-sm font-semibold break-words text-accent underline-offset-2 hover:underline">
             {company.name}
           </Link>
           <div className="flex flex-wrap gap-2">

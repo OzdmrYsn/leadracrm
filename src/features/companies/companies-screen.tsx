@@ -197,7 +197,7 @@ export function CompaniesScreen({ ws }: { ws: string }) {
               {rows.map((company) => (
                 <tr key={company.id} className="border-b transition-colors hover:bg-surface">
                   <th scope="row" className="max-w-sm px-3 py-2 font-medium">
-                    <Link href={`/w/${ws}/companies/${company.id}`} className="block truncate rounded-sm text-fg underline-offset-4 hover:underline">
+                    <Link href={`/w/${ws}/companies/${company.id}`} className="block truncate rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
                       {company.name}
                     </Link>
                   </th>

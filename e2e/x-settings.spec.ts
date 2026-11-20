@@ -1,4 +1,4 @@
-import { actAs, card, expect, expectNoA11yViolations, expectNoHorizontalOverflow, fill, gotoBoard, t, test, WS } from "./support";
+import { actAs, card, expect, expectNoA11yViolations, expectNoHorizontalOverflow, fill, gotoBoard, gotoLead, t, test, WS } from "./support";
 
 const workspacePage = `/w/${WS}/settings/workspace`;
 const profilePage = `/w/${WS}/settings/profile`;
@@ -30,6 +30,37 @@ test.describe("Ayarlar: çalışma alanı ve profil", () => {
     await page.goto(workspacePage);
     await expect(page.getByLabel(t.workspaceSettings.name)).toHaveValue("Yeni Atölye");
     await expect(page.getByRole("combobox", { name: t.workspaceSettings.timezone })).toContainText("Asia/Baku");
+  });
+
+  test("S39-H2 saat ve tarih biçimi değişir; lead kartındaki görev ve kayıt tarihi yeni biçimde yazılır", async ({ page, api }) => {
+    await page.goto(workspacePage);
+    const save = page.getByRole("button", { name: t.common.save });
+    await page.getByRole("combobox", { name: t.workspaceSettings.timeFormat }).click();
+    await page.getByRole("option", { name: t.workspaceSettings.timeFormats["12"] }).click();
+    await page.getByRole("combobox", { name: t.workspaceSettings.dateFormat }).click();
+    await page.getByRole("option", { name: t.workspaceSettings.dateFormats.dmy }).click();
+    await save.click();
+    await expect(page.getByText(t.workspaceSettings.saved)).toBeVisible();
+    // Saat biçimi yerel ayarın içinde gider; saat yazan her ekran onu kullanır.
+    expect((await api.get("/session")).workspace).toMatchObject({ timeFormat: "12", dateFormat: "dmy", locale: "tr-TR-u-hc-h12" });
+
+    await gotoLead(page, "l-kitchen");
+    const details = page.getByRole("region", { name: t.lead.details });
+    // Açık görevin son tarihi ve lead'in oluşturulma tarihi (iki yer): gg.aa.yyyy ve 12 saatlik saat.
+    await expect(details.locator("time").filter({ hasText: /^\d{2}\.\d{2}\.\d{4} Ö[ÖS] \d{2}:\d{2}$/ })).toHaveCount(2);
+    await expectNoA11yViolations(page);
+
+    // Yıl-ay-gün ve 24 saat: yenileyince kalıcı.
+    await page.goto(workspacePage);
+    await expect(page.getByRole("combobox", { name: t.workspaceSettings.timeFormat })).toContainText(t.workspaceSettings.timeFormats["12"]);
+    await page.getByRole("combobox", { name: t.workspaceSettings.timeFormat }).click();
+    await page.getByRole("option", { name: t.workspaceSettings.timeFormats["24"] }).click();
+    await page.getByRole("combobox", { name: t.workspaceSettings.dateFormat }).click();
+    await page.getByRole("option", { name: t.workspaceSettings.dateFormats.ymd }).click();
+    await save.click();
+    await expect(page.getByText(t.workspaceSettings.saved)).toBeVisible();
+    await gotoLead(page, "l-kitchen");
+    await expect(details.locator("time").filter({ hasText: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/ })).toHaveCount(2);
   });
 
   test("S39-E1 boş ad kaydedilmez: alan hatası görünür, istek gitmez; çok uzun ad yazılamaz", async ({ page, api }) => {
@@ -117,6 +148,8 @@ test.describe("Ayarlar: çalışma alanı ve profil", () => {
       expect((await api.patch("/workspace", { timezone: "Mars/Olympus" })).status).toBe(422);
       expect((await api.patch("/workspace", { name: "" })).status).toBe(422);
       expect((await api.patch("/workspace", { name: "a".repeat(121) })).status).toBe(422);
+      expect((await api.patch("/workspace", { timeFormat: "25" })).status).toBe(422);
+      expect((await api.patch("/workspace", { dateFormat: "gün-ay" })).status).toBe(422);
       expect((await api.patch("/profile", { name: " " })).status).toBe(422);
       expect((await api.get("/session")).workspace).toMatchObject({ name: "Örnek Atölye", currency: "TRY" });
       await actAs(page, null);

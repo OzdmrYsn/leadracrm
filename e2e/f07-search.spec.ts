@@ -22,6 +22,10 @@ test.describe("F07 Genel arama", () => {
 
   test("F07-H6 sonuçlar türe göre gruplanır; ok tuşlarıyla kişiye inilir ve açılır", async ({ page }) => {
     await page.goto(`/w/${WS}/calendar`);
+    // Takvim yüklenmeden pencere açılırsa pencerenin arka plana koyduğu aria-hidden, henüz canlanmamış (hydrate olmamış)
+    // bölümlerde React'in geliştirme uyarısını tetikleyebiliyor (293 koşuda bir kez görüldü). Önce sayfanın oturması beklenir.
+    await expect(page.getByRole("group", { name: t.calendar.viewLabel })).toBeVisible();
+    await expect(page.locator("[aria-busy]")).toHaveCount(0);
     await page.getByRole("button", { name: t.search.open, exact: true }).click();
     await input(page).fill("deniz");
     const list = page.getByRole("listbox", { name: t.search.results });

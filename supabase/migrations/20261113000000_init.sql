@@ -51,6 +51,8 @@ create table workspaces (
   country text,
   currency text not null default 'USD' check (currency ~ '^[A-Z]{3}$'),
   timezone text not null default 'UTC',
+  time_format text not null default '24' check (time_format in ('12', '24')),
+  date_format text not null default 'text' check (date_format in ('text', 'dmy', 'mdy', 'ymd')),   -- text: "21 Kas 2026"
   loss_reasons_enabled boolean not null default true,
   name_display_order smallint not null default 1 check (name_display_order in (1, 2)),
   created_by uuid references profiles (id) on delete set null,
@@ -127,16 +129,53 @@ create table invitations (
 -- Aynı e-postaya aynı çalışma alanında tek bekleyen davet.
 create unique index invitations_one_pending on invitations (workspace_id, email) where status = 'pending';
 
+-- ---- Giriş: uygulamanın kendi şifreli girişi ----------------------------
+-- Bu üç tabloya yalnız sunucu erişir: RLS açık, hiçbir kural yok (authenticated rolü hiçbir satırı göremez).
+-- Şifrenin kendisi saklanmaz; yalnız scrypt özeti (src/server/password.ts).
+create table user_credentials (
+  user_id uuid primary key references profiles (id) on delete cascade,
+  password_hash text not null,
+  email_verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Oturum: çerezdeki belirtecin SHA-256 özeti. Süresi kullanıldıkça uzar.
+create table user_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles (id) on delete cascade,
+  token_hash text not null unique,
+  user_agent text,
+  created_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create index user_sessions_user_idx on user_sessions (user_id);
+
+-- Tek kullanımlık belirteçler: e-posta doğrulama ve şifre sıfırlama. Yalnız özeti saklanır.
+create table auth_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profiles (id) on delete cascade,
+  kind text not null check (kind in ('verify', 'reset')),
+  token_hash text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index auth_tokens_user_idx on auth_tokens (user_id, kind);
+
 create table subscriptions (
   workspace_id uuid primary key references workspaces (id) on delete cascade,
   provider text,
   provider_customer_id text,
   provider_subscription_id text unique,
   plan text not null default 'trial' check (plan in ('trial', 'base', 'advanced', 'pro', 'enterprise')),
-  seats int not null default 1 check (seats >= 1),
+  seats int not null default 10 check (seats >= 1),   -- denemede 10 koltuk; abone olurken yönetici seçer
   status text not null default 'trialing' check (status in ('trialing', 'active', 'past_due', 'canceled')),
   trial_ends_at timestamptz,
   current_period_end timestamptz,
+  billing_period text check (billing_period in ('month', 'year')),
+  cancel_at_period_end boolean not null default false,   -- iptal edildi; dönem sonuna kadar kullanım sürer
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -212,11 +251,14 @@ create index files_workspace_idx on files (workspace_id, created_at desc);
 create table channels (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces (id) on delete cascade,
-  kind text not null check (kind in ('telegram', 'whatsapp', 'instagram', 'facebook', 'tiktok', 'livechat', 'sms')),
+  kind text not null check (kind in ('telegram', 'whatsapp', 'instagram', 'facebook', 'tiktok', 'livechat', 'sms', 'viber')),
   name text not null,
   external_account_id text not null,           -- bot kimliği, telefon numarası kimliği, sayfa kimliği
   status text not null default 'pending' check (status in ('pending', 'connected', 'error', 'disconnected')),
-  credentials_secret_id uuid,                  -- Supabase Vault kaydı
+  credentials_secret_id uuid,                  -- Supabase Vault kaydı (kullanılmıyor; anahtar aşağıdaki sütunda şifreli durur)
+  credentials_sealed text,                     -- kanal anahtarı: uygulama sırrıyla AES-256-GCM (src/server/secret-box.ts)
+  is_demo boolean not null default false,      -- örnek verinin kanalı: anahtarı yoktur, yalnız geliştirmede mesaj "gönderilmiş" sayılır
+  last_event_at timestamptz,                   -- kanaldan gelen son bildirim (kanal sağlığı)
   webhook_token_hash text,                     -- gelen webhook yolundaki gizli parçanın özeti
   pipeline_id uuid,                            -- gelen talepler bu pipeline'a düşer
   settings jsonb not null default '{}',
@@ -307,7 +349,7 @@ create table contact_handles (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null,
   contact_id uuid not null,
-  kind text not null check (kind in ('phone', 'email', 'telegram', 'whatsapp', 'instagram', 'facebook', 'tiktok', 'livechat')),
+  kind text not null check (kind in ('phone', 'email', 'telegram', 'whatsapp', 'instagram', 'facebook', 'tiktok', 'livechat', 'viber', 'sms')),
   value text not null check (length(value) between 1 and 320),   -- normalleştirilmiş: E.164, küçük harf e-posta, platform kimliği
   label text,
   created_at timestamptz not null default clock_timestamp(),

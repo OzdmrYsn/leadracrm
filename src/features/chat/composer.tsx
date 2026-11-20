@@ -78,7 +78,7 @@ export function Composer({
               onClick={() => setMode(option)}
               className={cn(
                 "h-8 rounded-md px-3 text-sm font-medium transition-colors",
-                active === option ? "bg-ink text-on-ink" : "text-muted hover:bg-surface-strong hover:text-fg",
+                active === option ? "bg-accent-soft font-semibold text-accent" : "text-muted hover:bg-surface-strong hover:text-fg",
               )}
             >
               {option === "chat" ? t.chat.modeChat : t.chat.modeNote}

@@ -1,8 +1,8 @@
 // Görevler. Bir görev tam olarak bir kayda (lead, kişi ya da şirket) bağlıdır; veritabanı da bunu zorlar.
-import type { CreateTaskInput, Id, Task, TaskFilter } from "@/lib/types";
+import type { CreateTaskInput, Id, Task, TaskFilter, TaskType } from "@/lib/types";
 import type { Fragment } from "../db";
 import { DataError, isUuid, notFound } from "../errors";
-import { checkUser, handoff, inWorkspace, logEvent, type Ctx } from "./ctx";
+import { checkUser, handoff, inWorkspace, logEvent, requireAdmin, type Ctx } from "./ctx";
 import { requireCan } from "./rights";
 
 type TaskRow = Omit<Task, "responsible" | "target"> & {
@@ -169,3 +169,54 @@ export function deleteTask(ws: string, taskId: Id): Promise<void> {
     await ctx.sql`delete from tasks where id = ${task.id}`;
   });
 }
+
+/* ---------- özel görev türleri (yalnız yönetici yazar) ---------- */
+
+/** Hazır türlerin (Takip, Toplantı) yanına çalışma alanının kendi türünü ekler. */
+export function createTaskType(ws: string, input: { name: string }): Promise<TaskType> {
+  return inWorkspace(ws, async (ctx) => {
+    requireAdmin(ctx);
+    const [{ sort }] = await ctx.sql<Array<{ sort: number }>>`select coalesce(max(sort), 0) + 10 as sort from task_types where workspace_id = ${ctx.ws.id}`;
+    const [type] = await ctx.sql<TaskType[]>`
+      insert into task_types (workspace_id, name, is_system, sort) values (${ctx.ws.id}, ${input.name.trim()}, false, ${sort})
+      returning id, name, is_system`;
+    return { ...type };
+  });
+}
+
+/** Yalnız özel türler adlandırılır; hazır türler değişmez. */
+export function updateTaskType(ws: string, typeId: Id, input: { name: string }): Promise<TaskType> {
+  return inWorkspace(ws, async (ctx) => {
+    requireAdmin(ctx);
+    if (!isUuid(typeId)) throw notFound("task type");
+    const [type] = await ctx.sql<TaskType[]>`
+      update task_types set name = ${input.name.trim()}
+      where id = ${typeId} and workspace_id = ${ctx.ws.id} and not is_system
+      returning id, name, is_system`;
+    if (!type) throw notFound("task type");
+    return { ...type };
+  });
+}
+
+/**
+ * Özel türü siler. Bu türdeki görevler silinmez: ilk hazır türe geçer. Bir tetikleyici bu türle görev ekliyorsa
+ * silme reddedilir; yoksa o tetikleyici sessizce çalışmaz hale gelirdi.
+ */
+export function deleteTaskType(ws: string, typeId: Id): Promise<void> {
+  return inWorkspace(ws, async (ctx) => {
+    requireAdmin(ctx);
+    if (!isUuid(typeId)) throw notFound("task type");
+    const [type] = await ctx.sql`select 1 from task_types where id = ${typeId} and workspace_id = ${ctx.ws.id} and not is_system`;
+    if (!type) throw notFound("task type");
+    const [used] = await ctx.sql`
+      select 1 from automations where workspace_id = ${ctx.ws.id} and kind = 'add_task' and settings->>'typeId' = ${typeId} limit 1`;
+    if (used) throw new DataError(409, "task_type_in_use");
+    const [fallback] = await ctx.sql<Array<{ id: Id }>>`
+      select id from task_types where workspace_id = ${ctx.ws.id} and is_system order by sort, created_at limit 1`;
+    await ctx.system(async () => {
+      if (fallback) await ctx.sql`update tasks set task_type_id = ${fallback.id} where workspace_id = ${ctx.ws.id} and task_type_id = ${typeId}`;
+      await ctx.sql`delete from task_types where id = ${typeId} and workspace_id = ${ctx.ws.id}`;
+    });
+  });
+}
+

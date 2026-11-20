@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { RotateCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { MessageBubble, type MessageStatus as BubbleStatus } from "@/components/ui/crm";
 import { fill, useI18n } from "@/i18n";
 import { formatClock } from "@/lib/format";
-import type { FeedItem, LeadEvent } from "@/lib/types";
+import { useRetryMessage } from "@/lib/hooks";
+import type { DateFormat, FeedItem, LeadEvent } from "@/lib/types";
 
 export function eventText(event: LeadEvent, t: ReturnType<typeof useI18n>["t"]): string {
   // Olayı bir tetikleyici yaptıysa kullanıcı adı yerine "Otomasyon" yazılır.
@@ -35,19 +38,24 @@ export function eventText(event: LeadEvent, t: ReturnType<typeof useI18n>["t"]):
  * Kaydırılan kap üst bileşendedir; bu bileşen yalnız içeriği çizer.
  */
 export function Feed({
+  ws,
   items,
   now,
   locale,
   timeZone,
+  dateFormat = "text",
   label,
 }: {
+  ws: string;
   items: FeedItem[];
   now: number;
   locale: string;
   timeZone: string;
+  dateFormat?: DateFormat;
   label: string;
 }) {
   const { t } = useI18n();
+  const retry = useRetryMessage(ws);
   const endRef = useRef<HTMLDivElement>(null);
   const count = items.length;
 
@@ -66,10 +74,25 @@ export function Feed({
             <li key={`m-${message.clientToken ?? message.id}`}>
               <MessageBubble
                 direction={message.direction}
-                time={formatClock(message.createdAt, now, locale, timeZone)}
+                time={formatClock(message.createdAt, now, locale, timeZone, dateFormat)}
                 status={status}
                 statusLabel={status ? t.chat.status[status] : undefined}
                 author={message.senderName ?? undefined}
+                failure={status === "failed" ? ((t.chat.failReasons as Record<string, string>)[message.errorCode ?? ""] ?? undefined) : undefined}
+                action={
+                  status === "failed" && !message.id.startsWith("pending-") ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={<RotateCw aria-hidden />}
+                      loading={retry.isPending && retry.variables?.messageId === message.id}
+                      aria-label={fill(t.chat.retryLabel, { text: message.body.slice(0, 40) })}
+                      onClick={() => retry.mutate({ conversationId: message.conversationId, messageId: message.id })}
+                    >
+                      {t.chat.retry}
+                    </Button>
+                  ) : undefined
+                }
               >
                 {message.body}
               </MessageBubble>
@@ -80,7 +103,7 @@ export function Feed({
           return (
             <li key={`n-${item.note.id}`} className="rounded-lg bg-warning-soft px-3 py-2 shadow-card">
               <p className="text-xs text-warning">
-                {t.chat.note} · {item.note.authorName} · <time>{formatClock(item.note.createdAt, now, locale, timeZone)}</time>
+                {t.chat.note} · {item.note.authorName} · <time>{formatClock(item.note.createdAt, now, locale, timeZone, dateFormat)}</time>
               </p>
               <p className="text-sm break-words whitespace-pre-wrap text-fg">{item.note.body}</p>
             </li>
@@ -88,7 +111,7 @@ export function Feed({
         }
         return (
           <li key={`e-${item.event.id}`} className="text-center text-xs text-muted">
-            {eventText(item.event, t)} · <time>{formatClock(item.event.createdAt, now, locale, timeZone)}</time>
+            {eventText(item.event, t)} · <time>{formatClock(item.event.createdAt, now, locale, timeZone, dateFormat)}</time>
           </li>
         );
       })}

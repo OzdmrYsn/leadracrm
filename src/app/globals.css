@@ -29,7 +29,7 @@
     background: var(--accent-soft);
   }
 
-  /* Koyu zeminlerde (sol menü, tanıtım sayfasının koyu bölümleri) odak halkası açık renge döner. */
+  /* Koyu zeminlerde (kutlama şeridi, tanıtım sayfasının petrol bandı) odak halkası açık renge döner. */
   [data-surface="dark"] {
     --focus: var(--focus-inverse);
   }
@@ -40,7 +40,7 @@
   }
 
   [data-surface="dark"] ::selection {
-    background: var(--sidebar-active);
+    background: var(--accent-hover);
   }
 }
 

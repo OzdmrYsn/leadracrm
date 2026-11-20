@@ -241,7 +241,7 @@ export function ContactScreen({ ws, contactId }: { ws: string; contactId: Id }) 
           <div className="px-2 py-1">
             <h2 className="text-xs text-muted">{t.common.created}</h2>
             <p className="text-sm text-fg">
-              <time dateTime={contact.createdAt}>{formatDateTime(contact.createdAt, workspace.locale, workspace.timezone)}</time>
+              <time dateTime={contact.createdAt}>{formatDateTime(contact.createdAt, workspace.locale, workspace.timezone, workspace.dateFormat)}</time>
             </p>
           </div>
         </section>

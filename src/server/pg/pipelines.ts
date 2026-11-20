@@ -3,7 +3,7 @@ import type { StageColor } from "@/components/ui/tag";
 import type { Id, LossReason, Pipeline, Stage, StageNames } from "@/lib/types";
 import { DataError, isUuid, notFound } from "../errors";
 import { inWorkspace, logEvent, requireAdmin } from "./ctx";
-import { findStage, loadPipeline, openStages } from "./shared";
+import { findStage, loadPipeline, loadPipelines, openStages } from "./shared";
 
 const MAX_PIPELINES = 50;
 const MAX_STAGES = 100;
@@ -115,6 +115,23 @@ export function deleteStage(ws: string, stageId: Id, moveTo?: Id): Promise<void>
     await sql`update leads set stage_id = ${target.id}, updated_by = ${ctx.user.id} where stage_id = ${stage.id}`;
     for (const lead of live) await logEvent(ctx, { leadId: lead.id, type: "stage_changed", from: stage.name, to: target.name });
     await sql`delete from stages where id = ${stage.id}`;
+  });
+}
+
+/**
+ * Pipeline'ların listedeki sırasını değiştirir. Ana pipeline her zaman başta kalır; diğerleri verilen sırayla dizilir.
+ * Liste, arşivlenmemiş bütün pipeline'ları tam olarak bir kez içermelidir.
+ */
+export function reorderPipelines(ws: string, orderedIds: Id[]): Promise<Pipeline[]> {
+  return inWorkspace(ws, async (ctx) => {
+    requireAdmin(ctx);
+    const pipelines = await loadPipelines(ctx);
+    const same = orderedIds.length === pipelines.length && new Set(orderedIds).size === orderedIds.length && pipelines.every((pipeline) => orderedIds.includes(pipeline.id));
+    if (!same) throw new DataError(422, "invalid_order");
+    for (const [index, id] of orderedIds.entries()) {
+      await ctx.sql`update pipelines set sort = ${index * 10} where id = ${id} and workspace_id = ${ctx.ws.id}`;
+    }
+    return loadPipelines(ctx);
   });
 }
 

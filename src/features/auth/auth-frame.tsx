@@ -7,7 +7,7 @@ import { fill } from "@/i18n/fill";
 import { tr } from "@/i18n/tr";
 
 /**
- * Kayıt, giriş ve şifre sayfalarının çerçevesi: geniş ekranda solda koyu marka paneli, sağda form.
+ * Kayıt, giriş ve şifre sayfalarının çerçevesi: geniş ekranda solda açık marka paneli, sağda form.
  * devMode geliştirme sağlayıcısının sınırını söyleyen notu gösterir.
  */
 export function AuthFrame({ title, body, devMode, children, footer }: { title: string; body: string; devMode: boolean; children: ReactNode; footer?: ReactNode }) {
@@ -15,16 +15,16 @@ export function AuthFrame({ title, body, devMode, children, footer }: { title: s
   const home = fill(t.home, { name: tr.app.name });
   return (
     <main className="grid min-h-dvh bg-bg lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      <aside data-surface="dark" className="relative hidden flex-col gap-10 overflow-hidden bg-ink p-10 text-on-ink lg:flex xl:p-14">
-        <Link href="/" aria-label={home} className="w-fit rounded-sm">
+      <aside className="relative hidden flex-col gap-10 overflow-hidden border-r bg-surface p-10 text-fg lg:flex xl:p-14">
+        <Link href="/" aria-label={home} className="w-fit rounded-sm text-fg">
           <Logo />
         </Link>
         <div className="flex max-w-md flex-col gap-6">
-          <p className="font-display text-display text-balance text-on-ink">{t.panelTitle}</p>
+          <p className="font-display text-2xl text-balance text-fg">{t.panelTitle}</p>
           <ul className="flex flex-col gap-3">
             {t.panelPoints.map((point) => (
-              <li key={point} className="flex items-start gap-3 text-base text-on-ink-muted">
-                <span aria-hidden className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-pill bg-highlight text-on-highlight">
+              <li key={point} className="flex items-start gap-3 text-base text-fg">
+                <span aria-hidden className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-pill bg-accent text-on-accent">
                   <Check className="size-3" strokeWidth={3} />
                 </span>
                 {point}
@@ -32,12 +32,12 @@ export function AuthFrame({ title, body, devMode, children, footer }: { title: s
             ))}
           </ul>
         </div>
-        <MiniBoard className="mt-auto w-[34rem] max-w-none -rotate-2 xl:w-[38rem]" />
+        <MiniBoard className="mt-auto w-full" />
       </aside>
 
       <section className="flex flex-col items-center justify-center px-4 py-10 sm:px-8">
         <div className="flex w-full max-w-sm flex-col gap-6">
-          <Link href="/" aria-label={home} className="w-fit rounded-sm text-accent lg:hidden">
+          <Link href="/" aria-label={home} className="w-fit rounded-sm text-fg lg:hidden">
             <Logo />
           </Link>
           <div className="flex flex-col gap-2">

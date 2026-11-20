@@ -15,7 +15,7 @@ export function LeadLinks({ ws, leads, session, emptyText }: { ws: string; leads
         const stage = stages.get(lead.stageId);
         return (
           <li key={lead.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-            <Link href={`/w/${ws}/leads/${lead.id}`} className="min-w-0 flex-1 truncate rounded-sm text-sm font-medium text-fg underline-offset-4 hover:underline">
+            <Link href={`/w/${ws}/leads/${lead.id}`} className="min-w-0 flex-1 truncate rounded-sm text-sm font-semibold text-accent underline-offset-2 hover:underline">
               {lead.name}
             </Link>
             {stage ? <Tag color={stage.color}>{stage.name}</Tag> : null}

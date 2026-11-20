@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, MailCheck, TriangleAlert } from "lucide-react";
+import { Check, Eye, EyeOff, MailCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/feedback";
 import { Field, Input } from "@/components/ui/field";
@@ -15,7 +15,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type Errors = Partial<Record<"name" | "email" | "password" | "workspace" | "form", string>>;
 
 /** Şifre alanı: göster/gizle düğmesiyle. */
-function PasswordInput({ id, value, onChange, invalid, autoComplete, describedBy }: { id: string; value: string; onChange: (value: string) => void; invalid: boolean; autoComplete: string; describedBy?: string }) {
+export function PasswordInput({ id, value, onChange, invalid, autoComplete, describedBy }: { id: string; value: string; onChange: (value: string) => void; invalid: boolean; autoComplete: string; describedBy?: string }) {
   const { t } = useI18n();
   const [shown, setShown] = useState(false);
   return (
@@ -45,7 +45,7 @@ function PasswordInput({ id, value, onChange, invalid, autoComplete, describedBy
   );
 }
 
-function FormError({ message }: { message?: string }) {
+export function FormError({ message }: { message?: string }) {
   return message ? (
     <Notice tone="danger" icon={<TriangleAlert aria-hidden />}>
       {message}
@@ -121,6 +121,12 @@ export function LoginForm() {
   const { pending, errors, setErrors, send } = useSubmit("/api/auth/login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Şifre sıfırlandıktan sonra buraya ?reset=1 ile gelinir.
+  const [resetDone, setResetDone] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- adres yalnız tarayıcıda okunabilir
+    if (new URLSearchParams(window.location.search).get("reset") === "1") setResetDone(true);
+  }, []);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -135,6 +141,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+      {resetDone ? (
+        <Notice tone="success" icon={<Check aria-hidden />}>
+          {a.resetDone}
+        </Notice>
+      ) : null}
       <FormError message={errors.form} />
       <Field id="login-email" label={a.email} error={errors.email} required>
         <Input id="login-email" type="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? "login-email-note" : undefined} required autoFocus />

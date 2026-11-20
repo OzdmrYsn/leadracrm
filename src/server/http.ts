@@ -47,6 +47,8 @@ function databaseError(error: unknown): { status: number; code: string; detail: 
       if (detail.includes("system_stage") || detail.includes("stage_kind_is_fixed")) return { status: 422, code: "system_stage", detail };
       if (detail.includes("last_admin")) return { status: 422, code: "last_admin", detail };
       return { status: 422, code: "validation", detail };
+    case "25006": // salt okunur işlem: abonelik etkin değilken yazma denendi
+      return { status: 402, code: "subscription_required", detail };
     case "42501": // satır düzeyi güvenlik reddetti
       return { status: 403, code: "forbidden", detail };
     default:

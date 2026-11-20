@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { Pencil, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { errorText } from "@/lib/errors";
 import { useCreateGroup, useDeleteGroup, useGroups, useMembers, useSession, useUpdateGroup, useUpdateMember } from "@/lib/hooks";
 import { RIGHTS_PRESETS } from "@/lib/rights";
 import type { Group, Member, Rights } from "@/lib/types";
+import { InviteSection } from "./invite-section";
 import { RightsEditor } from "./rights-editor";
 
 const NO_GROUP = "none";
@@ -298,11 +300,19 @@ export function UsersScreen({ ws }: { ws: string }) {
             {t.team.title}
           </h2>
           <p className="text-sm text-muted">{t.team.body}</p>
+          <p className="text-sm text-fg">
+            {fill(t.billing.seatLine, { used: session.data.subscription.seatsUsed, seats: session.data.subscription.seats })}{" "}
+            {canEdit ? (
+              <Link href={`/w/${ws}/settings/billing`} className="rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
+                {t.billing.seatLink}
+              </Link>
+            ) : null}
+          </p>
         </div>
         <p role="status" aria-live="polite" className="sr-only">
           {announcement}
         </p>
-        {!canEdit ? <Notice tone="info">{t.team.adminOnly}</Notice> : <Notice tone="info">{t.team.inviteNote}</Notice>}
+        {!canEdit ? <Notice tone="info">{t.team.adminOnly}</Notice> : null}
 
         {/* relative: tablodaki yalnız ekran okuyucuya görünen (mutlak konumlu) metinler bu kabın içinde kalsın; yoksa sayfayı yana taşırırlar. */}
         <div className="relative overflow-x-auto rounded-md border">
@@ -358,6 +368,8 @@ export function UsersScreen({ ws }: { ws: string }) {
           </table>
         </div>
       </section>
+
+      {canEdit ? <InviteSection ws={ws} /> : null}
 
       <GroupsSection ws={ws} groups={groups.data} members={members.data} canEdit={canEdit} />
 

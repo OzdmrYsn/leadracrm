@@ -15,11 +15,11 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-/** İşaret ve ürün adı. Renk bulunduğu yerden gelir (currentColor). */
-export function Logo({ className }: { className?: string }) {
+/** İşaret ve ürün adı. İşaret vurgu rengindedir; adın rengi bulunduğu yerden gelir. mono verilirse ikisi de aynı renktedir (koyu zemin). */
+export function Logo({ className, mono = false }: { className?: string; mono?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-display text-lg font-bold", className)}>
-      <LogoMark />
+      <LogoMark className={mono ? undefined : "text-accent"} />
       {tr.app.name}
     </span>
   );

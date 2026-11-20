@@ -335,7 +335,7 @@ export function InsightsScreen({ ws }: { ws: string }) {
                   {data.events.map((event) => (
                     <li key={event.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2">
                       <span className="min-w-0 text-sm text-fg">
-                        <Link href={`/w/${ws}/leads/${event.leadId}`} className="rounded-sm font-medium underline-offset-4 hover:underline">
+                        <Link href={`/w/${ws}/leads/${event.leadId}`} className="rounded-sm font-semibold text-accent underline-offset-2 hover:underline">
                           {event.leadName}
                         </Link>
                         <span className="text-muted"> · {eventText(event, t)}</span>

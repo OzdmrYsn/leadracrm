@@ -8,8 +8,8 @@ import { Field, Input } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { useI18n } from "@/i18n";
 import { errorText } from "@/lib/errors";
-import { useCreateLossReason, useDeleteLossReason, useSession, useUpdateLossReason, useUpdateWorkspace } from "@/lib/hooks";
-import type { Workspace } from "@/lib/types";
+import { useCreateLossReason, useCreateTaskType, useDeleteLossReason, useDeleteTaskType, useSession, useUpdateLossReason, useUpdateTaskType, useUpdateWorkspace } from "@/lib/hooks";
+import type { DateFormat, TimeFormat, Workspace } from "@/lib/types";
 import { NameList } from "./name-list";
 
 const CURRENCIES = [
@@ -46,6 +46,8 @@ function WorkspaceForm({ ws, workspace, canEdit }: { ws: string; workspace: Work
   const [name, setName] = useState(workspace.name);
   const [currency, setCurrency] = useState(workspace.currency);
   const [timezone, setTimezone] = useState(workspace.timezone);
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(workspace.timeFormat);
+  const [dateFormat, setDateFormat] = useState<DateFormat>(workspace.dateFormat);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -68,7 +70,14 @@ function WorkspaceForm({ ws, workspace, canEdit }: { ws: string; workspace: Work
   }, [workspace.timezone]);
 
   const nameError = submitted && name.trim() === "" ? t.workspaceSettings.nameRequired : undefined;
-  const dirty = name.trim() !== workspace.name || currency !== workspace.currency || timezone !== workspace.timezone;
+  const dirty =
+    name.trim() !== workspace.name ||
+    currency !== workspace.currency ||
+    timezone !== workspace.timezone ||
+    timeFormat !== workspace.timeFormat ||
+    dateFormat !== workspace.dateFormat;
+  const timeFormats = (["24", "12"] as const).map((value) => ({ value, label: t.workspaceSettings.timeFormats[value] }));
+  const dateFormats = (["text", "dmy", "mdy", "ymd"] as const).map((value) => ({ value, label: t.workspaceSettings.dateFormats[value] }));
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -77,7 +86,7 @@ function WorkspaceForm({ ws, workspace, canEdit }: { ws: string; workspace: Work
     setProblem(null);
     if (name.trim() === "") return;
     update.mutate(
-      { name, currency, timezone },
+      { name, currency, timezone, timeFormat, dateFormat },
       { onSuccess: () => setSaved(true), onError: (error) => setProblem(errorText(error, t)) },
     );
   }
@@ -115,6 +124,16 @@ function WorkspaceForm({ ws, workspace, canEdit }: { ws: string; workspace: Work
         <Select id={`${id}-timezone`} value={timezone} onValueChange={setTimezone} options={zones} disabled={!canEdit} aria-describedby={`${id}-timezone-note`} />
       </Field>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id={`${id}-time-format`} label={t.workspaceSettings.timeFormat}>
+          <Select id={`${id}-time-format`} value={timeFormat} onValueChange={(value) => setTimeFormat(value as TimeFormat)} options={timeFormats} disabled={!canEdit} />
+        </Field>
+        <Field id={`${id}-date-format`} label={t.workspaceSettings.dateFormat}>
+          <Select id={`${id}-date-format`} value={dateFormat} onValueChange={(value) => setDateFormat(value as DateFormat)} options={dateFormats} disabled={!canEdit} />
+        </Field>
+      </div>
+      <p className="-mt-2 text-xs text-muted">{t.workspaceSettings.formatHint}</p>
+
       <dl className="flex flex-col gap-3 border-t pt-4">
         <div className="flex flex-col gap-0.5">
           <dt className="text-sm font-medium text-fg">{t.workspaceSettings.language}</dt>
@@ -147,6 +166,9 @@ export function WorkspaceScreen({ ws }: { ws: string }) {
   const createReason = useCreateLossReason(ws);
   const updateReason = useUpdateLossReason(ws);
   const deleteReason = useDeleteLossReason(ws);
+  const createType = useCreateTaskType(ws);
+  const updateType = useUpdateTaskType(ws);
+  const deleteType = useDeleteTaskType(ws);
 
   if (session.isPending) {
     return (
@@ -191,6 +213,16 @@ export function WorkspaceScreen({ ws }: { ws: string }) {
         onCreate={(name) => createReason.mutateAsync(name)}
         onRename={(id, name) => updateReason.mutateAsync({ id, name })}
         onDelete={(id) => deleteReason.mutateAsync(id)}
+      />
+      {/* Hazır türler (Takip, Toplantı) listede yoktur: adları ve varlıkları sabittir. */}
+      <NameList
+        labels={t.taskTypes}
+        items={session.data.taskTypes.filter((type) => !type.isSystem)}
+        canEdit={session.data.user.isAdmin}
+        maxLength={60}
+        onCreate={(name) => createType.mutateAsync(name)}
+        onRename={(id, name) => updateType.mutateAsync({ id, name })}
+        onDelete={(id) => deleteType.mutateAsync(id)}
       />
     </div>
   );

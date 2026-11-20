@@ -1,4 +1,4 @@
-import { card, expect, expectNoA11yViolations, feed, fill, gotoBoard, gotoLead, t, test, WS } from "./support";
+import { actAs, card, expect, expectNoA11yViolations, feed, fill, gotoBoard, gotoLead, t, test, WS } from "./support";
 import type { Page } from "@playwright/test";
 
 type Task = { id: string; text: string; dueAt: string; completedAt: string | null; resultText: string | null; responsible: { id: string } | null };
@@ -240,6 +240,70 @@ test.describe("F06 görev oluştur ve tamamla", () => {
       await expect(dialog).toBeHidden();
       const created = (await tasksOf(api, "lead=l-wardrobe")).find((task) => task.text === "Başka dilimden")!;
       expect(created.dueAt).toBe(`${workspaceDay(2)}T06:15:00.000Z`);
+    });
+  });
+
+  test("F06-H5 yönetici kendi görev türünü ekler ve adlandırır; görev eklerken seçilir; tür silinince görev ilk hazır türe geçer", async ({ page, api }) => {
+    const labels = t.taskTypes;
+    await page.goto(`/w/${WS}/settings/workspace`);
+    await expect(page.getByText(labels.none)).toBeVisible();
+    await page.getByLabel(labels.newName).fill("Keşif");
+    await page.getByRole("button", { name: labels.add }).click();
+    const name = page.getByRole("textbox", { name: fill(labels.nameOf, { name: "Keşif" }) });
+    await name.fill("Keşif ziyareti");
+    await name.press("Enter");
+    await expect(page.getByRole("textbox", { name: fill(labels.nameOf, { name: "Keşif ziyareti" }) })).toBeVisible();
+    await expectNoA11yViolations(page);
+    // Hazır türler listede değildir; oturumda üçü birlikte gelir.
+    const types = (await api.get("/session")).taskTypes as Array<{ id: string; name: string; isSystem: boolean }>;
+    expect(types.map((type) => [type.name, type.isSystem])).toEqual([["Takip", true], ["Toplantı", true], ["Keşif ziyareti", false]]);
+    const custom = types[2].id;
+
+    // Görev eklerken yeni tür seçilir.
+    await gotoLead(page, "l-desks");
+    const dialog = await openTaskDialog(page);
+    await dialog.getByRole("combobox", { name: t.tasks.type }).click();
+    await page.getByRole("option", { name: "Keşif ziyareti" }).click();
+    await dialog.getByLabel(t.tasks.text).fill("Yerinde ölçü");
+    await dialog.getByRole("button", { name: t.tasks.tomorrow }).click();
+    await dialog.getByRole("button", { name: t.tasks.submit }).click();
+    await expect(dialog).toBeHidden();
+    const row = tasksPanel(page).getByRole("listitem").filter({ hasText: "Yerinde ölçü" });
+    await expect(row).toContainText("Keşif ziyareti");
+
+    // Tür silinir: görev durur, türü ilk hazır tür olur.
+    await page.goto(`/w/${WS}/settings/workspace`);
+    await page.getByRole("button", { name: fill(labels.remove, { name: "Keşif ziyareti" }) }).click();
+    await page.getByRole("button", { name: labels.removeConfirm }).click();
+    await expect(page.getByText(labels.none)).toBeVisible();
+    const [task] = (await api.get("/tasks?status=all&lead=l-desks")) as Array<{ text: string; typeName: string }>;
+    expect([task.text, task.typeName]).toEqual(["Yerinde ölçü", "Takip"]);
+    expect(((await api.get("/session")).taskTypes as unknown[]).length).toBe(2);
+    expect(custom).not.toBe("");
+  });
+
+  test.describe("görev türü kuralları", () => {
+    test.use({ allow4xx: [403, 404, 409, 422] });
+
+    test("F06-N2 hazır tür değiştirilemez ve silinemez; otomasyonun kullandığı tür silinemez; üye tür ekleyemez", async ({ page, api }) => {
+      expect((await api.patch("/task-types/tt-follow", { name: "Arama" })).status).toBe(404);
+      expect((await api.delete("/task-types/tt-follow")).status).toBe(404);
+      expect((await api.post("/task-types", { name: " " })).status).toBe(422);
+      expect((await api.post("/task-types", { name: "a".repeat(61) })).status).toBe(422);
+
+      const created = await api.post("/task-types", { name: "Numune" });
+      expect(created.status).toBe(201);
+      const typeId = created.body.id as string;
+      const trigger = await api.post("/automations", { stageId: "s-first", onEvent: "stage_entered", kind: "add_task", settings: { typeId, text: "Numune hazırla", dueInMinutes: 60, responsible: "lead" } });
+      expect(trigger.status).toBe(201);
+      const blocked = await api.delete(`/task-types/${typeId}`);
+      expect([blocked.status, blocked.body.error.code]).toEqual([409, "task_type_in_use"]);
+      expect((await api.delete(`/automations/${trigger.body.id}`)).status).toBe(204);
+      expect((await api.delete(`/task-types/${typeId}`)).status).toBe(204);
+
+      await actAs(page, "u-bora");
+      expect((await api.post("/task-types", { name: "Üyenin türü" })).status).toBe(403);
+      await actAs(page, null);
     });
   });
 
